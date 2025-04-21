@@ -18,11 +18,17 @@ public class ASTVisualizer {
         // Create a JScrollPane to make the tree scrollable
         JScrollPane scrollPane = new JScrollPane(tree);
 
+        for (int row = 0; row < tree.getRowCount(); row++) {
+            tree.expandRow(row);  // Expands all nodes
+        }
+
         // Create the JFrame to display the tree
         JFrame frame = new JFrame("AST Visualizer");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(400, 400);
         frame.add(scrollPane, BorderLayout.CENTER);
         frame.setVisible(true);
+
     }
+
 }

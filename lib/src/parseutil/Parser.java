@@ -70,6 +70,7 @@ public class Parser {
                     System.out.println("Applying rule: " + top + " -> " + prod);
 
                     ASTNode currentNode = new ASTNode(top);
+                    ASTNode children = null;
                     boolean isRoot = false;
                     if (root==null){
                         System.out.println("New Root = " + top);
@@ -81,19 +82,23 @@ public class Parser {
                     for (int i = production.length - 1; i >= 0; i--)
                     {
                         parseStack.push(production[i].trim().toString());
-
                         if (isRoot){
-                            ASTNode nextRoot = new ASTNode(production[i].trim().toString());
-                            currentNode.addChild(nextRoot);
-                            astNodeStack.push(nextRoot);
-                            System.out.println("Adding child " + production[i].trim().toString()+ "to root");
+                            children = new ASTNode(production[i].trim().toString());
+                            currentNode.addChild(children);
+                            astNodeStack.push(children);
                         }
-                        else {
-                            ASTNode nextRoot = new ASTNode(production[i].trim().toString());
-                            astNodeStack.pop().addChild(nextRoot);
-                            astNodeStack.push(nextRoot);
-                            }
+                        else 
+                        {
+                            children = new ASTNode(production[i].trim().toString());
+                            astNodeStack.peek().addChild(children);
+                        }
                     }
+                    if(!isRoot)
+                    {
+                        astNodeStack.pop();
+                        astNodeStack.push(children);
+                    }
+                    
 
                 } else {
                     // Syntax error if no rule exists
