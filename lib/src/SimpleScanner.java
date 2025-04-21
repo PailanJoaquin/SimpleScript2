@@ -100,6 +100,7 @@ public class SimpleScanner {
                     Token result = createToken(token);
                     if (result != null)
                     {
+                        unreadBuffer.append(c);
                         return result;
                     } else {
                         skipInvalidToken();

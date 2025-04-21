@@ -1,9 +1,7 @@
-
-task int cj (int y)
+task void addition(int x)
 {
-    y be 10;
+	let int x;
 }
-let int x ;
-x be 10 ;
-let int y ;
-y be 100 ;
+x be 10;
+show (x);
+

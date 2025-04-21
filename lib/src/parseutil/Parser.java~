@@ -72,7 +72,6 @@ public class Parser {
                     ASTNode currentNode = new ASTNode(top);
                     boolean isRoot = false;
                     if (root==null){
-                        System.out.println("New Root = " + top);
                         isRoot = true;
                         root = currentNode;
                     }
@@ -86,11 +85,10 @@ public class Parser {
                             ASTNode nextRoot = new ASTNode(production[i].trim().toString());
                             currentNode.addChild(nextRoot);
                             astNodeStack.push(nextRoot);
-                            System.out.println("Adding child " + production[i].trim().toString()+ "to root");
                         }
                         else {
                             ASTNode nextRoot = new ASTNode(production[i].trim().toString());
-                            astNodeStack.pop().addChild(nextRoot);
+                            astNodeStack.pop().addChild(new ASTNode(production[i].trim().toString()));
                             astNodeStack.push(nextRoot);
                             }
                     }

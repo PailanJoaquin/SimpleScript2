@@ -1,100 +1,103 @@
 package lib.src.generators;
 
 import java.io.*;
+import com.opencsv.*;
 import java.util.*;
 
 public class LL1ParsingTableGenerator {
 
     private Map<String, Set<String>> firstSets;
     private Map<String, Set<String>> followSets;
-    private Map<String, List<String>> grammar;
-    private Map<String, Map<String, String>> parsingTable;
+    private Map<String, List<List>> grammar;
+    private Map<String, Map<String, String>> parsingTable;  // To store the LL(1) parsing table
 
-    public LL1ParsingTableGenerator(Map<String, Set<String>> firstSets, Map<String, Set<String>> followSets, Map<String, List<String>> grammar) {
+    public LL1ParsingTableGenerator(Map<String, Set<String>> firstSets, Map<String, Set<String>> followSets, Map<String, List<List>> grammar) {
         this.firstSets = firstSets;
         this.followSets = followSets;
         this.grammar = grammar;
         this.parsingTable = new HashMap<>();
-        generateParsingTable();
     }
 
-    // Generate the LL(1) Parsing Table
-    private void generateParsingTable() {
+    public void generateTable() {
+        // Step 1: Initialize the table
+        // Initialize the parsing table where keys are non-terminals and values are maps of terminals to production rules
         for (String nonTerminal : grammar.keySet()) {
-            Map<String, String> row = new HashMap<>();
-            for (String production : grammar.get(nonTerminal)) {
-                String[] symbols = production.split("\\s+");
-                Set<String> firstSetForProduction = calculateFirst(symbols[0]);
+            parsingTable.put(nonTerminal, new HashMap<>());
+        }
 
-                for (String terminal : firstSetForProduction) {
-                    if (!terminal.equals("ε")) {
-                        row.put(terminal, nonTerminal + " -> " + production);
+        // Step 2: Fill the parsing table using FIRST and FOLLOW sets
+        for (String nonTerminal : grammar.keySet()) {
+            List<List> productions = grammar.get(nonTerminal);
+            for (List<String> production : productions) {
+                Set<String> firstSet = getFirstSet(production);
+                for (String terminal : firstSet) {
+                    if(terminal.charAt(0) == '[')
+                    {
+                        terminal = terminal.substring(1, terminal.length() - 1);
+                    }
+                    if (!terminal.equals("ε")) {  // We don't add "ε" directly
+                        parsingTable.get(nonTerminal).put(terminal, nonTerminal + " -> " + String.join(" ", production));
+                        //System.out.println("Production Created for "+ nonTerminal + ": "+parsingTable.get(nonTerminal).get(terminal));//DEBUG
                     }
                 }
 
-                // If ε is in the First set, add to Follow set as well
-                if (firstSetForProduction.contains("ε")) {
-                    for (String follow : followSets.get(nonTerminal)) {
-                        row.put(follow, nonTerminal + " -> " + production);
+                // If the production can derive ε, add FOLLOW(nonTerminal) to the table
+                if (firstSet.contains("ε")) {
+                    //System.out.println("Production of"+ nonTerminal + "Contains epsilon" + firstSet);//DEBUG
+                    Set<String> followSet = followSets.get(nonTerminal);
+                    for (String terminal : followSet) {
+                        //System.out.println(parsingTable.entrySet());//DEBUG
+                        parsingTable.get(nonTerminal).put(terminal, nonTerminal + " -> " + String.join(" ", production));
+                        //System.out.println("Production Created for "+ nonTerminal + ": "+parsingTable.get(nonTerminal).get(terminal));//DEBUG
                     }
                 }
             }
-            parsingTable.put(nonTerminal, row);
         }
+
+        // Step 3: Write the parsing table to a CSV file
+        printParsingTable();
     }
 
-    // Helper method to calculate the First set
-    private Set<String> calculateFirst(String symbol) {
+    private Set<String> getFirstSet(List<String> production) {
         Set<String> firstSet = new HashSet<>();
-
-        if (!grammar.containsKey(symbol)) {
-            firstSet.add(symbol); // Terminal
+        if (production.size() == 0) {
+            firstSet.add("ε");
             return firstSet;
         }
 
-        for (String production : grammar.get(symbol)) {
-            String[] symbols = production.split("\\s+");
-            if (symbols[0].equals(symbol)) continue;  // Avoid recursion
-
-            firstSet.addAll(calculateFirst(symbols[0]));
+        String symbol = production.get(0);
+        if (firstSets.containsKey(symbol)) {
+            firstSet.addAll(firstSets.get(symbol));
+        } else {
+            firstSet.add(symbol);  // It's a terminal symbol
         }
+
         return firstSet;
     }
 
-    // Output the LL(1) Parsing Table as CSV
-    public void generateCSVOutput(String outputFileName) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFileName))) {
-            Set<String> terminals = new HashSet<>();
-            for (Map.Entry<String, Set<String>> entry : firstSets.entrySet()) {
-                terminals.addAll(entry.getValue());
-            }
-            terminals.add("$");
+    private void printParsingTable() {
+        // Iterate through each non-terminal in the parsing table
+        for (String nonTerminal : parsingTable.keySet()) {
+            // Retrieve the map for the current non-terminal
+            Map<String, String> terminalMap = parsingTable.get(nonTerminal);
 
-            // Header (Terminals)
-            writer.write("Non-Terminals,");
-            for (String terminal : terminals) {
-                writer.write(terminal + ",");
-            }
-            writer.write("\n");
+            // Print the non-terminal
+            System.out.println("Non-Terminal: " + nonTerminal);
 
-            // Write the table rows
-            for (String nonTerminal : parsingTable.keySet()) {
-                writer.write(nonTerminal + ",");
-                Map<String, String> row = parsingTable.get(nonTerminal);
-                for (String terminal : terminals) {
-                    if (row.containsKey(terminal)) {
-                        writer.write(row.get(terminal) + ",");
-                    } else {
-                        writer.write(","); // Empty cell
-                    }
-                }
-                writer.write("\n");
-            }
+            // Iterate through each terminal and its corresponding production rule
+            for (Map.Entry<String, String> entry : terminalMap.entrySet()) {
+                String terminal = entry.getKey();
+                String production = entry.getValue();
 
-            System.out.println("LL(1) Parsing Table output generated in " + outputFileName);
-        } catch (IOException e) {
-            e.printStackTrace();
+                // Print the terminal and its corresponding production rule
+                System.out.println("  Terminal: " + terminal + " -> Production: " + production);
+            }
+            System.out.println();  // New line for better readability between non-terminals
         }
+    }
+
+    public Map<String, Map<String, String>> getTable() {
+        return parsingTable;
     }
 
 }

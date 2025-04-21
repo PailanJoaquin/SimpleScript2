@@ -1,7 +1,7 @@
 package lib.src;
 
 import lib.src.generators.LL1ParsingTableGenerator;
-import lib.src.generators.SetTerminals;
+import lib.src.parseutil.ASTNode;
 import lib.src.parseutil.Parser;
 import lib.src.generators.FirstFollowSetGenerator;
 import lib.src.tokenutil.*;
@@ -17,20 +17,20 @@ public class  Tester {
         // Specify the filename directly
         String filePath = "lib/src/source_file_03.simp";  // Replace this with your desired .simp file path
 
-
-
         //Parsing Table
 
         //Generate First and Follow Sets
         FirstFollowSetGenerator firstFollowSetGenerator = new FirstFollowSetGenerator("lib/src/parseutil/Grammar.txt");
-//        Map<String, Set<String>> firstSets = firstFollowSetGenerator.getFirstSets();
-//        Map<String, Set<String>> followSets = firstFollowSetGenerator.getFollowSets();
-//        Map<String, List<String>> grammar = firstFollowSetGenerator.getGrammar(); // Assuming grammar is also available
 
-//        //Generate LL(1) Parsing Table
-//        LL1ParsingTableGenerator ll1ParsingTableGenerator = new LL1ParsingTableGenerator(firstSets, followSets, grammar);
-//        ll1ParsingTableGenerator.generateCSVOutput("LL1_parsing_table.csv");
-//
+        //Generate Parsing Table
+        Map<String, Set<String>> firstSets = firstFollowSetGenerator.getFirstSets();
+        Map<String, Set<String>> followSets = firstFollowSetGenerator.getFollowSets();
+        Map<String, List<List>> grammar = firstFollowSetGenerator.getGrammar();
+        LL1ParsingTableGenerator table = new LL1ParsingTableGenerator(firstSets, followSets, grammar);
+        table.generateTable();
+
+
+
         // Initializing and Declaration
         SimpleScanner scanner = new SimpleScanner(filePath);
         SymbolTable symbolTable;
@@ -46,12 +46,12 @@ public class  Tester {
             tokens.add(token);
         }
 
-        Parser parser = new Parser(tokens);
+        Parser parser = new Parser(table.getTable(),tokens);
+        parser.parse();
+        parser.visualizeAST();
 
         SymbolTable symbolTable1 = scanner.getSymbolTable();
         symbolTable1.printSymbols();
-
-
 
     }
 }

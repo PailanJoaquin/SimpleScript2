@@ -1,6 +1,9 @@
 package lib.src.tokenutil;
 
-import lib.src.tokenutil.TokenType;
+import lib.src.generators.SetTerminals;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class Token {
     private TokenType type;
@@ -29,6 +32,31 @@ public class Token {
 
     public int getColumnNumber() {
         return columnNumber;
+    }
+
+    public String getItem()
+    {
+        Set<String> terminals = new HashSet<>();
+        for (SetTerminals item : SetTerminals.values())
+        {
+            terminals.add(item.getStringValue());
+        }
+        if (terminals.contains(lexeme)) //IF KEYWORD OR PUNCTATION OR ANY TERMINALS, RETURN AS IT IS
+        {
+            return lexeme.toString();
+        }
+        if (type == TokenType.IDENTIFIER) //CHECKS IF IDENTIFIER
+        {
+            return type.toString();
+        }
+        if (type == TokenType.LITERAL) //CHECKS IF LITERAL
+        {
+            return "INT";
+        }
+        else
+        {
+            return type.toString();
+        }
     }
 
 

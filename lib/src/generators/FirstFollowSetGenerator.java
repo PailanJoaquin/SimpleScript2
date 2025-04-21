@@ -9,18 +9,32 @@ public class FirstFollowSetGenerator {
     private Set<String> items = new HashSet<>();
     private Map<String, Set<String>> firstSets = new HashMap<>();
     private Map<String, Set<String>> followSets = new HashMap<>();
+    private Set<String> terminals = new HashSet<>();
+    private Set<String> nonTerminals = new HashSet<>();
 
 
     public FirstFollowSetGenerator(String fileName) {
         readGrammarFromFile(fileName);
         calculateFirstSets();
-//        calculateFollowSets();
+        removeBracketsFirst();
+        calculateFollowSets();
+        removeBracketsFollow();
 
+                    for (String key : grammar.keySet()) //DEBUG
+            {
+                System.out.println("Key: " + key + " -> Values: " + grammar.get(key));
+            }
         Iterator<String> iterator = items.iterator();
         while (iterator.hasNext())
         {
             String item = iterator.next();
             System.out.println("FIRST("+ item + ") = " + firstSets.get(item));//DEBUG
+        }
+        Iterator<String> iterator2 = nonTerminals.iterator();
+        while (iterator2.hasNext())
+        {
+            String item = iterator2.next();
+            System.out.println("Follow("+ item + ") = " + followSets.get(item));//DEBUG
         }
     }
 
@@ -41,19 +55,22 @@ public class FirstFollowSetGenerator {
                     rhs.add(symbol);
                     items.add(symbol);
                 }
-                rhsStack.add(rhs);
-                if (!grammar.containsKey(lhs)) {
+                if (!grammar.containsKey(lhs))
+                {
+                    rhsStack.add(rhs);
                     grammar.put(lhs,rhsStack);
                 }
                 else
-                    grammar.get(lhs).add(rhsStack);
+                {
+                    for(List<List> list : grammar.get(lhs))
+                    {
+                        rhsStack.add(list);
+                    }
+                    rhsStack.add(rhs);
+                    grammar.put(lhs,rhsStack);
+                }
 
             }
-
-//            for (String key : grammar.keySet()) //DEBUG
-//            {
-//                System.out.println("Key: " + key + " -> Values: " + grammar.get(key));
-//            }
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -63,8 +80,6 @@ public class FirstFollowSetGenerator {
     // Calculate the First set for each non-terminal
     private void calculateFirstSets() {
         Iterator<String> iterator = items.iterator();
-        Set<String> terminals = new HashSet<>();
-        Set<String> nonTerminals = new HashSet<>();
         for(SetTerminals setTerminal : SetTerminals.values()) //Load Terminal Items
         {
             terminals.add(setTerminal.getStringValue());
@@ -76,25 +91,31 @@ public class FirstFollowSetGenerator {
                 Set<String> terminal = new HashSet<>();
                 terminal.add(item);
                 firstSets.put(item, terminal);
-                //System.out.println("FIRST("+ item + ") = " + firstSets.get(item));//DEBUG
+                followSets.putIfAbsent(item, new HashSet<>());
             }
             else
             {
+                followSets.putIfAbsent(item, new HashSet<>());
                 nonTerminals.add(item);
-                //System.out.println("Non Terminal Found : " + item);//DEBUG
             }
         }
 
         for (String nonTerminal : nonTerminals) {
-            firstSets.putIfAbsent(nonTerminal, calculateFirst(nonTerminal));
+            firstSets.putIfAbsent(nonTerminal, new HashSet<>());
+            firstSets.put(nonTerminal, calculateFirst(nonTerminal));
         }
-
+        int iterationCount = 0;
+        do {
+            iterationCount++;
+            for (String nonTerminal : nonTerminals) {
+                reCheckFirst(nonTerminal);
+            }
+        }while (iterationCount <= 10);
     }
 
     // Helper method to calculate First set
     private Set<String> calculateFirst(String symbol) {
         Set<String> firstSet = new HashSet<>();
-        //System.out.println("Calculating First of : " + symbol);//DEBUG
         if (!grammar.containsKey(symbol)) {
             firstSet.add(symbol); // Terminal
             return firstSet;
@@ -104,64 +125,154 @@ public class FirstFollowSetGenerator {
             Set <String> newProduction = new HashSet<>();
             if(grammar.get(symbol).size()>1)
             {
-                if(grammar.get(symbol).get(stackCounter).get(0).toString().equals(grammar.get(symbol).get(stackCounter).get(0).toString()))
+                if(firstSets.get(symbol).contains(grammar.get(symbol).get(stackCounter).get(0).toString()))
                     continue;
                 else
                 {
                     newProduction.add(grammar.get(symbol).get(stackCounter++).get(0).toString());
-                    System.out.println("DEBUGGING : " + newProduction);//DEBUG
+                    firstSet.add(newProduction.toString());
                 }
             }
             else
+            {
                 newProduction.add(grammar.get(symbol).get(0).get(0).toString());
-            firstSet.add(newProduction.toString());
+                firstSet.add(newProduction.toString());
+            }
 
             if ((stackCounter) == grammar.get(symbol).size())
                 break;
         }
         return firstSet;
     }
-//
-//    // Calculate the Follow set for each non-terminal
-//    private void calculateFollowSets() {
-//        for (String nonTerminal : grammar.keySet()) {
-//            followSets.put(nonTerminal, calculateFollow(nonTerminal));
-//        }
-//    }
-//
-//    // Helper method to calculate Follow set
-//    private Set<String> calculateFollow(String nonTerminal) {
-//        Set<String> followSet = new HashSet<>();
-//
-//        if ("S".equals(nonTerminal)) {
-//            followSet.add("$");  // Assuming "S" is the start symbol
-//        }
-//
-//        for (String lhs : grammar.keySet()) {
-//            for (String rhs : grammar.get(lhs)) {
-//                String[] symbols = rhs.split("\\s+");
-//                for (int i = 0; i < symbols.length; i++) {
-//                    if (symbols[i].equals(nonTerminal)) {
-//                        if (i + 1 < symbols.length) {
-//                            followSet.addAll(calculateFirst(symbols[i + 1]));
-//                        } else if (!lhs.equals(nonTerminal)) {
-//                            followSet.addAll(calculateFollow(lhs));
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        return followSet;
-//    }
-//
-//    public Map<String, Set<String>> getFirstSets() {
-//        return firstSets;
-//    }
-//
-//    public Map<String, Set<String>> getFollowSets() {
-//        return followSets;
-//    }
-//    public Map<String, List<String>> getGrammar() {
-//        return grammar;
-//    }
+
+    private void reCheckFirst(String symbol)
+    {
+        Set<String> firstSet = new HashSet<>();
+        Iterator<String> iterator = firstSets.get(symbol).iterator();
+
+        while (iterator.hasNext())
+        {
+            String terminal = iterator.next();
+            if (terminal.charAt(0) == '[')
+            {
+                terminal = terminal.substring(1, terminal.length()-1);
+            }
+            if (grammar.containsKey(terminal) && !terminal.equals("ε"))
+            {
+                for (String terminals : firstSets.get(terminal))
+                {
+                    if (terminals.charAt(0) == '[')
+                    {
+                        terminals = terminals.substring(1, terminals.length()-1);
+                    }
+                    firstSet.add(terminals);
+                }
+                firstSets.put(symbol, firstSet);
+            }
+        }
+    }
+    private void removeBracketsFirst()
+    {
+        for(String symbol : firstSets.keySet())
+        {
+            Iterator<String> iterator = firstSets.get(symbol).iterator();
+            Set<String> newSet = new HashSet<>();
+            while (iterator.hasNext())
+            {
+                String terminal = iterator.next();
+                if (terminal.charAt(0) == '[')
+                {
+                    terminal = terminal.substring(1, terminal.length()-1);
+                }
+                //System.out.println(terminal);//DEBUG
+                newSet.add(terminal);
+            }
+            firstSets.put(symbol, newSet);
+        }
+    }
+    private void removeBracketsFollow()
+            {for(String symbol : followSets.keySet())
+        {
+            Set<String> newSet = new HashSet<>();
+            Iterator<String> iterator = followSets.get(symbol).iterator();
+            while (iterator.hasNext())
+            {
+                String terminal = iterator.next();
+                if (terminal.charAt(0) == '[')
+                {
+                    terminal = terminal.substring(1, terminal.length()-1);
+                }
+                //System.out.println(terminal);//DEBUG
+                if(!terminal.equals("ε"))
+                {
+                    newSet.add(terminal);
+                }
+            }
+            followSets.put(symbol, newSet);
+        }
+        followSets.remove("ε");
+    }
+
+    // Calculate the Follow set for each non-terminal
+    private void calculateFollowSets() {
+        //System.out.println("Calculating Follow Sets...");
+        Set<String> startSymbol = new HashSet<>();
+        startSymbol.add("$");
+        followSets.put("START_PRIME", startSymbol);
+        calculateFollow();
+    }
+
+    // Helper method to calculate Follow set
+    private void calculateFollow() {
+
+        boolean changed = true;
+        do {
+            changed = false;
+            // System.out.println("Running....");
+            for (Map.Entry<String, List<List>> entry : grammar.entrySet()) {
+                String nonTerminal = entry.getKey();
+                List<List> productions = entry.getValue();
+                // System.out.println(nonTerminal + " -> " + productions);//Debug
+
+                for (List<String> production : productions) {
+                    for (int i = 0; i < production.size(); i++) { // ITERATE EACH ITEM IN PRODUCTION
+                        String symbol = production.get(i);
+                        //System.out.println("For Symbol : " + symbol);//Debug
+                        if (nonTerminals.contains(symbol)) { // IF IT IS A NON-TERMINAL
+                            // Case 1: A -> αBβ (add FIRST(β) to FOLLOW(B))
+                            if (i + 1 < production.size()) {
+                                String nextSymbol = production.get(i + 1);
+                                if (grammar.containsKey(nextSymbol)) {
+                                    // Get FIRST(nextSymbol), but exclude "ε"
+                                    Set<String> firstSetNextSymbol = firstSets.get(nextSymbol);
+                                    if (firstSetNextSymbol != null && !firstSetNextSymbol.isEmpty())
+                                    {
+                                        firstSetNextSymbol.remove("ε"); // Remove "ε" from FIRST set
+                                        //System.out.println("First Symbol is " + firstSetNextSymbol );//Debug
+                                        changed = followSets.get(symbol).addAll(firstSetNextSymbol);
+                                    }
+                                }
+                            }
+                            // Case 2: A -> αB (add FOLLOW(A) to FOLLOW(B))
+                            if (i == production.size() - 1 || production.get(i + 1).equals("ε")) {
+                                Set<String> followSetA = followSets.get(nonTerminal);
+                                followSetA.remove("ε");  // Ensure "ε" is not propagated
+                                changed = followSets.get(symbol).addAll(followSetA);
+                            }
+                        }
+                    }
+                }
+            }
+        } while (changed); // Continue until no changes
+    }
+    public Map<String, Set<String>> getFirstSets() {
+        return firstSets;
+    }
+
+    public Map<String, Set<String>> getFollowSets() {
+        return followSets;
+    }
+    public Map<String, List<List>> getGrammar() {
+        return grammar;
+    }
 }
