@@ -15,13 +15,6 @@ public class FirstFollowSetGenerator {
         readGrammarFromFile(fileName);
         calculateFirstSets();
 //        calculateFollowSets();
-
-        Iterator<String> iterator = items.iterator();
-        while (iterator.hasNext())
-        {
-            String item = iterator.next();
-            System.out.println("FIRST("+ item + ") = " + firstSets.get(item));//DEBUG
-        }
     }
 
     // Read the grammar from a file
@@ -104,16 +97,16 @@ public class FirstFollowSetGenerator {
             Set <String> newProduction = new HashSet<>();
             if(grammar.get(symbol).size()>1)
             {
-                if(grammar.get(symbol).get(stackCounter).get(0).toString().equals(grammar.get(symbol).get(stackCounter).get(0).toString()))
+                if(grammar.get(symbol).get(stackCounter).getFirst().toString().equals(grammar.get(symbol).get(stackCounter).getFirst().toString()))
                     continue;
                 else
                 {
-                    newProduction.add(grammar.get(symbol).get(stackCounter++).get(0).toString());
+                    newProduction.add(grammar.get(symbol).get(stackCounter++).getFirst().toString());
                     System.out.println("DEBUGGING : " + newProduction);//DEBUG
                 }
             }
             else
-                newProduction.add(grammar.get(symbol).get(0).get(0).toString());
+                newProduction.add(grammar.get(symbol).getFirst().getFirst().toString());
             firstSet.add(newProduction.toString());
 
             if ((stackCounter) == grammar.get(symbol).size())
