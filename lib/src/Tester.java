@@ -20,7 +20,7 @@ public class  Tester {
         //Parsing Table
 
         //Generate First and Follow Sets
-        FirstFollowSetGenerator firstFollowSetGenerator = new FirstFollowSetGenerator("lib/src/parseutil/Grammar.txt");
+        FirstFollowSetGenerator firstFollowSetGenerator = new FirstFollowSetGenerator("lib/src/parseutil/newgrammar.txt");
 
         //Generate Parsing Table
         Map<String, Set<String>> firstSets = firstFollowSetGenerator.getFirstSets();

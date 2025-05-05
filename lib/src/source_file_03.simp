@@ -1,7 +1,2 @@
-task void addition(int x)
-{
-	let int x;
-}
-x be 10;
-show (x);
-
+let int x;
+x be 1 plus 1;
