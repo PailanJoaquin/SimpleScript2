@@ -219,7 +219,16 @@ public class FirstFollowSetGenerator {
         Set<String> startSymbol = new HashSet<>();
         startSymbol.add("$");
         followSets.put("START_PRIME", startSymbol);
-        calculateFollow();
+        for (int i=0; i<5; i++) {
+            calculateFollow();
+            calculateFollow();
+        }
+        removeEpsilonFollow();
+    }
+
+    private void removeEpsilonFollow()
+    {
+
     }
 
     // Helper method to calculate Follow set
@@ -232,31 +241,39 @@ public class FirstFollowSetGenerator {
             for (Map.Entry<String, List<List>> entry : grammar.entrySet()) {
                 String nonTerminal = entry.getKey();
                 List<List> productions = entry.getValue();
-                // System.out.println(nonTerminal + " -> " + productions);//Debug
+                //System.out.println(nonTerminal + " -> " + productions);//Debug
 
                 for (List<String> production : productions) {
                     for (int i = 0; i < production.size(); i++) { // ITERATE EACH ITEM IN PRODUCTION
                         String symbol = production.get(i);
-                        //System.out.println("For Symbol : " + symbol);//Debug
+                        //System.out.println("For Symbol : " + symbol + "of" + production);//Debug
                         if (nonTerminals.contains(symbol)) { // IF IT IS A NON-TERMINAL
-                            // Case 1: A -> αBβ (add FIRST(β) to FOLLOW(B))
+                            // Case 1: A -> αBβ
                             if (i + 1 < production.size()) {
                                 String nextSymbol = production.get(i + 1);
-                                if (grammar.containsKey(nextSymbol)) {
-                                    // Get FIRST(nextSymbol), but exclude "ε"
+                                // Case 1.1: if β is non-terminal
+                                if (grammar.containsKey(nextSymbol))
+                                {
                                     Set<String> firstSetNextSymbol = firstSets.get(nextSymbol);
                                     if (firstSetNextSymbol != null && !firstSetNextSymbol.isEmpty())
-                                    {
-                                        firstSetNextSymbol.remove("ε"); // Remove "ε" from FIRST set
+                                    { // Case 1.2: β -> ε (add FOLLOW(A) to FOLLOW(B))
+                                        if (firstSetNextSymbol.contains("ε")) {
+                                            Set<String> followSetA = followSets.get(nonTerminal);
+                                            followSets.get(symbol).addAll(followSetA);
+                                        }
                                         //System.out.println("First Symbol is " + firstSetNextSymbol );//Debug
                                         changed = followSets.get(symbol).addAll(firstSetNextSymbol);
                                     }
                                 }
+                                else // Case 1.3: β is terminal
+                                {
+                                    changed = followSets.get(symbol).add(nextSymbol);
+                                }
                             }
                             // Case 2: A -> αB (add FOLLOW(A) to FOLLOW(B))
-                            if (i == production.size() - 1 || production.get(i + 1).equals("ε")) {
+                            if (i == production.size() - 1) {
+                                System.out.println("Adding Symbol : " + followSets.get(nonTerminal) + "to" + symbol);//Debug
                                 Set<String> followSetA = followSets.get(nonTerminal);
-                                followSetA.remove("ε");  // Ensure "ε" is not propagated
                                 changed = followSets.get(symbol).addAll(followSetA);
                             }
                         }

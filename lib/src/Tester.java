@@ -33,7 +33,6 @@ public class  Tester {
 
         // Initializing and Declaration
         SimpleScanner scanner = new SimpleScanner(filePath);
-        SymbolTable symbolTable;
         Stack<Token> tokens = new Stack<>();
 
         // Print the tokens for debugging
