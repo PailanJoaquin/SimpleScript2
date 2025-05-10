@@ -1,2 +1,14 @@
-let int x;
-x be 10;
+let int a;
+let int b;
+let int sum;
+let int difference;
+let int product;
+let int quotient;
+
+a be 20;
+b be 5;
+
+sum be a plus b;
+difference be a minus b;
+product be a times b;
+quotient be a over b;

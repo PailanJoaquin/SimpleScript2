@@ -53,6 +53,10 @@ public class Token {
         {
             return "INT";
         }
+        if(type == TokenType.EOF)
+        {
+            return getLexeme();
+        }
         else
         {
             return type.toString();

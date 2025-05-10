@@ -272,7 +272,6 @@ public class FirstFollowSetGenerator {
                             }
                             // Case 2: A -> αB (add FOLLOW(A) to FOLLOW(B))
                             if (i == production.size() - 1) {
-                                System.out.println("Adding Symbol : " + followSets.get(nonTerminal) + "to" + symbol);//Debug
                                 Set<String> followSetA = followSets.get(nonTerminal);
                                 changed = followSets.get(symbol).addAll(followSetA);
                             }

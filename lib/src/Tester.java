@@ -43,8 +43,8 @@ public class  Tester {
         while ((token = scanner.getNextToken()) != null) {
             System.out.println(token.toString() + "Token #"+counter++);
             tokens.add(token);
-        }
 
+        }
         Parser parser = new Parser(table.getTable(),tokens);
         parser.parse();
         parser.visualizeAST();

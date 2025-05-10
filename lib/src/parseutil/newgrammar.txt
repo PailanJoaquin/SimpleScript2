@@ -21,10 +21,6 @@ IO_STMT           -> SHOW_FUNC
 IO_STMT           -> GIVE_FUNC
 SHOW_FUNC         -> show ( IDENTIFIER ) ;
 GIVE_FUNC         -> give ( IDENTIFIER ) ;
-LITERAL           -> STRING
-LITERAL           -> INT
-LITERAL           -> FLOAT
-LITERAL           -> BOOL
 COMPOUND_STMT     -> CONDITIONAL_STMT
 COMPOUND_STMT     -> LOOP_STMT
 CONDITIONAL_STMT  -> IF_STMT
@@ -56,8 +52,11 @@ TERM_PRIME        -> over FACTOR TERM_PRIME
 TERM_PRIME        -> mod FACTOR TERM_PRIME
 TERM_PRIME        -> ε
 FACTOR            -> ( EXPR )
-FACTOR            -> LITERAL
 FACTOR            -> IDENTIFIER
+FACTOR           -> STRING
+FACTOR           -> INT
+FACTOR           -> FLOAT
+FACTOR           -> BOOL
 COMPARISON_OP     -> is
 COMPARISON_OP     -> isnt
 COMPARISON_OP     -> less
