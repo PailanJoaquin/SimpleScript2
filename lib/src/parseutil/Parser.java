@@ -1,14 +1,15 @@
 package lib.src.parseutil;
 
-import lib.src.tokenutil.*;
+import java.util.Map;
+import java.util.Stack;
 
-import java.util.*;
+import lib.src.tokenutil.Token;
 
 public class Parser {
     private Map<String, Map<String, String>> parsingTable;
     private Stack<String> parseStack;
     private Stack<Token> input;
-    private Stack<Token> newInput = new Stack<>();
+    private Stack<String> newInput = new Stack<>();
     private ASTNode root;
     private Stack<ASTNode> astNodeStack = new Stack<>();
 
@@ -19,127 +20,96 @@ public class Parser {
     }
 
     public void parse() {
-        // Push the start symbol onto the stack
-            parseStack.push("START_PRIME");
-        Iterator<Token> iterator = input.iterator();
-        while (iterator.hasNext()) {
-            Token token = iterator.next();
-            newInput.push(token);
+        parseStack.push("START_PRIME");
+        for (Token token : input) {
+            newInput.push(token.getItem());
         }
-        newInput.push(new Token(TokenType.EOF, "$", 0, 0));
+        newInput.push("$");
         newInput = reverseStack(newInput);
 
-        // Process input string
-        int index = 0;
         while (!parseStack.isEmpty()) {
-            System.out.println("Parsing Stack: " + parseStack);
             String top = parseStack.peek();
+            String currentInput = newInput.peek();
 
-            //Generates Input Stack for debug only
-            Iterator<Token> iterator2 = newInput.iterator();
-            Stack<String> stringInputStack = new Stack<>();
-            while (iterator2.hasNext()) {
-                Token token = iterator2.next();
-                stringInputStack.push(token.getItem());
-            }
-            System.out.println("Input Stack: " + stringInputStack);
-
-            String currentInput = newInput.peek().getItem();
+            System.out.println("Parsing Stack: " + parseStack);
+            System.out.println("Input Stack: " + newInput);
             System.out.println("Top of the Parsing Stack: " + top);
             System.out.println("Top of the Input Stack: " + currentInput);
 
             if (isTerminal(top)) {
-                // If top of the stack is terminal, match it with input
-                if (currentInput.equals("$") && top.equals("START_PRIME")){
+                if (currentInput.equals("$") && top.equals("START_PRIME")) {
                     parseStack.pop();
                     newInput.pop();
                 } else if (top.equals("ε")) {
                     System.out.println("Removing ε : " + top);
                     parseStack.pop();
-                }else if (top.equals(currentInput)) {
+                } else if (top.equals(currentInput)) {
                     System.out.println("Match: " + top);
                     parseStack.pop();
-                    newInput.pop();// Remove terminal from stack
-                }else{
-                    // Syntax error if the terminal doesn't match
-                    System.out.println("Syntax Error: Expected " + top + " but found " + currentInput + " at line " + newInput.peek().getLineNumber()
-                            + " at column " + newInput.peek().getColumnNumber());
+                    newInput.pop();
+                } else {
+                    System.out.println("Syntax Error: Expected " + top + " but found " + currentInput);
                     return;
                 }
             } else {
-                // If top of the stack is non-terminal, consult the parsing table
                 Map<String, String> row = parsingTable.get(top);
-                if (row != null && row.containsKey(String.valueOf(currentInput)))
-                {
-                    String [] tempProd = row.get(String.valueOf(currentInput)).toString().split("->");
+                if (row != null && row.containsKey(currentInput)) {
+                    String[] tempProd = row.get(currentInput).split("->");
                     String prod = tempProd[1].trim();
-                    String [] production = prod.split(" ");
+                    String[] rhs = prod.equals("ε") ? new String[0] : prod.split(" ");
 
-                    //String production = row.get(String.valueOf(currentInput));
                     System.out.println("Applying rule: " + top + " -> " + prod);
 
                     ASTNode currentNode = new ASTNode(top);
-                    ASTNode children = null;
-                    boolean isRoot = false;
-                    if (root==null){
-                        System.out.println("New Root = " + top);
-                        isRoot = true;
+                    if (root == null) {
                         root = currentNode;
+                    } else if (!astNodeStack.isEmpty()) {
+                        astNodeStack.peek().addChild(currentNode);
                     }
 
                     parseStack.pop();
-                    for (int i = production.length - 1; i >= 0; i--)
-                    {
-                        parseStack.push(production[i].trim().toString());
-                        if (isRoot){
-                            children = new ASTNode(production[i].trim().toString());
-                            currentNode.addChild(children);
-                            astNodeStack.push(children);
-                        }
-                        else 
-                        {
-                            children = new ASTNode(production[i].trim().toString());
-                            astNodeStack.peek().addChild(children);
-                        }
-                    }
-                    if(!isRoot)
-                    {
-                        astNodeStack.pop();
-                        astNodeStack.push(children);
-                    }
-                    
+                    astNodeStack.push(currentNode);
 
+                    for (int i = rhs.length - 1; i >= 0; i--) {
+                        parseStack.push(rhs[i]);
+                    }
+
+                    for (String symbol : rhs) {
+                        ASTNode child = new ASTNode(symbol);
+                        currentNode.addChild(child);
+
+                        if (!isTerminal(symbol) && !symbol.equals("ε")) {
+                            astNodeStack.push(child);
+                        }
+                    }
+
+                    astNodeStack.pop(); // done with this rule
                 } else {
-                    // Syntax error if no rule exists
-                    System.out.println("Syntax Error: No rule for " + top + " with input " + currentInput + " at line " + newInput.peek().getLineNumber()
-                    + " at column " + newInput.peek().getColumnNumber());
+                    System.out.println("Syntax Error: No rule for " + top + " with input " + currentInput);
                     return;
                 }
             }
         }
 
-        // Check if the entire input has been consumed
-        if (index == newInput.size()-1) {
+        if (newInput.size() == 1 && newInput.peek().equals("$")) {
             System.out.println("Input parsed successfully!");
         } else {
             System.out.println("Syntax Error: Extra input remaining.");
         }
     }
 
-    // Helper method to check if a symbol is terminal
     private boolean isTerminal(String symbol) {
         return !parsingTable.containsKey(symbol);
     }
 
-    public static Stack<Token> reverseStack(Stack<Token> originalStack) {
-        Stack<Token> reversedStack = new Stack<>();
-
-        // Pop elements from the original stack and push them to the reversed stack
+    public static Stack<String> reverseStack(Stack<String> originalStack) {
+        Stack<String> reversedStack = new Stack<>();
         while (!originalStack.isEmpty()) {
             reversedStack.push(originalStack.pop());
         }
         return reversedStack;
     }
+
     public void visualizeAST() {
         ASTVisualizer.visualizeAST(root);
     }
