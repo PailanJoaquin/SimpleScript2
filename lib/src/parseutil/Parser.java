@@ -4,14 +4,16 @@ import java.util.Map;
 import java.util.Stack;
 
 import lib.src.tokenutil.Token;
+import lib.src.tokenutil.TokenType;
 
 public class Parser {
     private Map<String, Map<String, String>> parsingTable;
     private Stack<String> parseStack;
     private Stack<Token> input;
-    private Stack<String> newInput = new Stack<>();
+    private Stack<Token> newInput = new Stack<>();
     private ASTNode root;
     private Stack<ASTNode> astNodeStack = new Stack<>();
+    private Stack<String> stringInputStack = new Stack<>();
 
     public Parser(Map<String, Map<String, String>> parsingTable, Stack<Token> input) {
         this.parsingTable = parsingTable;
@@ -20,19 +22,24 @@ public class Parser {
     }
 
     public void parse() {
+        // Push the start symbol onto the stack
         parseStack.push("START_PRIME");
         for (Token token : input) {
-            newInput.push(token.getItem());
+            newInput.push(token);
         }
-        newInput.push("$");
+        newInput.push(new Token(TokenType.EOF, "$", 0, 0));
         newInput = reverseStack(newInput);
 
+        // Process input string
         while (!parseStack.isEmpty()) {
             String top = parseStack.peek();
-            String currentInput = newInput.peek();
+            String currentInput = newInput.peek().getItem();
+            for (Token input : newInput) {
+                stringInputStack.push(input.getItem());
+            }
 
             System.out.println("Parsing Stack: " + parseStack);
-            System.out.println("Input Stack: " + newInput);
+            System.out.println("Input Stack: " + stringInputStack);
             System.out.println("Top of the Parsing Stack: " + top);
             System.out.println("Top of the Input Stack: " + currentInput);
 
@@ -48,7 +55,8 @@ public class Parser {
                     parseStack.pop();
                     newInput.pop();
                 } else {
-                    System.out.println("Syntax Error: Expected " + top + " but found " + currentInput);
+                    System.out.println("Syntax Error: Expected " + top + " but found " + currentInput + " at line " + newInput.peek().getLineNumber() + " and " +
+                            "column " + newInput.peek().getColumnNumber());
                     return;
                 }
             } else {
@@ -85,16 +93,18 @@ public class Parser {
 
                     astNodeStack.pop(); // done with this rule
                 } else {
-                    System.out.println("Syntax Error: No rule for " + top + " with input " + currentInput);
+                    System.out.println("Syntax Error: No rule for " + top + " with input " + currentInput + " at line " + newInput.peek().getLineNumber() + " and " +
+                            "column " + newInput.peek().getColumnNumber());
                     return;
                 }
             }
         }
 
-        if (newInput.size() == 1 && newInput.peek().equals("$")) {
+        if (newInput.size() == 1 && newInput.peek().getItem().equals("$")) {
             System.out.println("Input parsed successfully!");
         } else {
-            System.out.println("Syntax Error: Extra input remaining.");
+            System.out.println("Syntax Error: Extra input remaining." + " at line " + newInput.peek().getLineNumber() + " and " +
+                    "column " + newInput.peek().getColumnNumber());
         }
     }
 
@@ -102,8 +112,8 @@ public class Parser {
         return !parsingTable.containsKey(symbol);
     }
 
-    public static Stack<String> reverseStack(Stack<String> originalStack) {
-        Stack<String> reversedStack = new Stack<>();
+    public static Stack<Token> reverseStack(Stack<Token> originalStack) {
+        Stack<Token> reversedStack = new Stack<>();
         while (!originalStack.isEmpty()) {
             reversedStack.push(originalStack.pop());
         }
