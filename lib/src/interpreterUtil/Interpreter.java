@@ -29,6 +29,7 @@ public class Interpreter {
                 case "show" : handleShow(); break;
                 case "give" : handleGive(); break;
                 case "repeat" : handleForLoop(); break;
+                case "check": handleIfStatement(); break;
 
                 default:
                     throw new RuntimeException("Unexpected token: " + current.getLexeme() + " at line" + current.getLineNumber() + "and column" + current.getColumnNumber());
@@ -88,7 +89,6 @@ public class Interpreter {
         Object value = symbolTable.get(var.getLexeme());
         System.out.println(value);
     }
-
     private void handleGive() {
         inputStack.pop(); // give
         inputStack.pop(); // (
@@ -115,7 +115,6 @@ public class Interpreter {
         //throw new RuntimeException("Invalid expression token: " + token.getLexeme()+" at line" + token.getLineNumber() + "and column" + token.getColumnNumber());
     }
     private void handleForLoop() {
-        System.out.println(inputStack);
         loopTable = this.symbolTable;
         inputStack.pop(); // pop 'repeat'
         inputStack.pop(); // pop '('
@@ -140,7 +139,6 @@ public class Interpreter {
         List<Token> updateExpr = readTokensUntil(")"); //example = "i be i plus 1"
 
         inputStack.pop(); // pop '{'
-
         // ---- Extract body tokens until matching '}'
         Stack<Token> bodyTokens = readBlockTokens();
         bodyTokens = reverseStack(bodyTokens);
@@ -163,18 +161,42 @@ public class Interpreter {
             while (tempIterator.hasNext()) {
                 inputStack.push(tempIterator.next());
             }
-            System.out.println(inputStack);
             Object updatedValue = evaluateExpression();
             loopTable.assign(updateVar, updatedValue);
         }
     }
+    private void handleIfStatement() {
+        inputStack.pop(); // pop 'check'
+        inputStack.pop(); // pop '('
+        List<Token> conditionTokens = readTokensUntil(")");// read condition
+        Iterator<Token> iterator = conditionTokens.iterator();
+        Stack<Token> tempStack = new Stack<>();
+        while (iterator.hasNext()) {
+            tempStack.push(iterator.next());
+        }
+        tempStack = reverseStack(tempStack);
+        inputStack.pop(); // pop '{'
+        Stack<Token> ifBody = readBlockTokens();
+
+        // Evaluate 'check' condition
+        boolean condition = toBoolean(evaluatePostfix(infixToPostfix(reverseStack(tempStack))));
+        if (condition) {
+            Interpreter ifInterpreter = new Interpreter();
+            ifInterpreter.symbolTable = this.symbolTable;
+            ifInterpreter.inputStack = reverseStack(ifBody);
+            ifInterpreter.evaluate();
+        }
+        return;
+    }
+
+
     private String infixToPostfix(Stack<Token> infix) {
         StringBuilder postfix = new StringBuilder();
         Stack<String> stack = new Stack<>();
 
         for (Token token : infix) {
             String lexeme = token.getLexeme();
-            if (isFloat(lexeme) || isInteger(lexeme) ||isVariable(lexeme)) {
+            if (isFloat(lexeme) || isInteger(lexeme) ||isVariable(lexeme) ||isBoolean(lexeme)||isString(lexeme)) {
                 postfix.append(lexeme).append(" ");
             } else if (lexeme.equals("(")) {
                 stack.push(lexeme);
@@ -200,37 +222,44 @@ public class Interpreter {
         return symbolTable.contains(lexeme);
     }
     private List<Token> readTokensUntil(String delimiter) {
-        System.out.println("Reading tokens until " + delimiter);
+        //System.out.println("Reading tokens until " + delimiter);
         List<Token> tokens = new ArrayList<>();
         while (!inputStack.peek().getLexeme().equals(delimiter)) {
-            System.out.println("Popping: " + inputStack.peek().getLexeme());
+            //System.out.println("Popping: " + inputStack.peek().getLexeme());
             tokens.add(inputStack.pop());
         }
         inputStack.pop(); // pop delimiter
         return tokens;
     }
-
     private Stack<Token> readBlockTokens() {
         Stack<Token> body = new Stack<>();
         int openBraces = 1;
         while (openBraces > 0) {
+            //System.out.println("Reading block tokens: " + inputStack.peek().getLexeme());
             Token token = inputStack.pop();
-            if (token.getLexeme().equals("{")) openBraces++;
-            else if (token.getLexeme().equals("}")) openBraces--;
-            if (openBraces > 0) body.add(token);
+            if (token.getLexeme().equals("{"))
+            {
+                openBraces++;
+            }
+            else if (token.getLexeme().equals("}"))
+            {
+                openBraces--;
+            }
+            if (openBraces > 0) body.push(token);
         }
         return body;
     }
-
     private boolean evaluateCondition(String varName, List<Token> expr) {
         loopTable.assign(varName, "int"); // just in case
-        Object value = evaluateExpression();
-        return toBoolean(value);
+        return false;
     }
-    public boolean toBoolean(Object value) {
-        if (value instanceof Boolean) return (Boolean) value;
-        if (value instanceof Number) return ((Number) value).doubleValue() != 0;
-        return value != null;
+    public boolean toBoolean(String value) {
+        if (value.equals("yes")) return true;
+        else if (value.equals("no"))
+            return false;
+        else
+            System.err.println("Error: Invalid value '" + value + "'");
+        return false;
     }
     public void printSymbolTable() {
         symbolTable.printSymbols();
@@ -241,5 +270,131 @@ public class Interpreter {
             reversedStack.push(originalStack.pop());
         }
         return reversedStack;
+    }
+    public String evaluatePostfix(String postfix) {
+        Stack<String> stack = new Stack<>();
+        String[] tokens = postfix.split("\\s+"); // Split by spaces to handle multi-digit numbers
+        //System.out.println("Evaluating postfix expression: " + postfix);
+        String result="";
+
+        for (String token : tokens) {
+            if (isArithmeticOp(token)) {
+                // Pop two operands
+                String a = stack.pop();
+                String b = stack.pop();
+
+                if (isVariable(a)){
+                    a = (String)symbolTable.get(a);
+                }
+                if (isVariable(b)){
+                    b = (String)symbolTable.get(b);
+                }
+                // Apply the operator and push the result back
+                if(isInteger(a) && isInteger(b)){
+                    result = applyOperatorInteger(a, b, token);
+                }
+                else if(isFloat(a) || isFloat(b)){
+                    result = applyOperatorFloat(a, b, token);
+                }
+                else {
+                    throw new IllegalArgumentException("Type mismatch");
+                }
+                stack.push(result);
+            } else if (isComparisonOp(token)) {
+                String b = stack.pop();
+                String a = stack.pop();
+                if (isVariable(a)){
+                    a = (String)symbolTable.get(a);
+                    if (a == "yes")
+                        a = "true";
+                }
+                if (isVariable(b)){
+                    b = (String)symbolTable.get(b);
+                    if (b == "no")
+                        b = "false";
+                }
+                result = applyComparison(a, b, token);
+                if(result.equals("true")) result="yes";
+                else if(result.equals("false")) result="no";
+                else throw new IllegalArgumentException("Type mismatch");
+                stack.push(result); // Push result as string "true"/"false"
+
+            } else {
+                stack.push(token); // Operand
+            }
+        }
+
+        // The final result will be the only element left in the stack
+        return stack.pop();
+    }
+    private static String applyOperatorInteger(String b, String a, String operator) {
+        switch (operator) {
+            case "plus":
+                return String.valueOf(Integer.parseInt(a) + Integer.parseInt(b));
+            case "minus":
+                return String.valueOf(Integer.parseInt(a) - Integer.parseInt(b));
+            case "times":
+                return String.valueOf(Integer.parseInt(a) * Integer.parseInt(b));
+            case "over":
+                return String.valueOf(Integer.parseInt(a) / Integer.parseInt(b));
+            case "mod":
+                return String.valueOf(Integer.parseInt(a) % Integer.parseInt(b));
+            default:
+                throw new IllegalArgumentException("Invalid operator: " + operator);
+        }
+    }
+    private static String applyOperatorFloat(String b, String a, String operator) {
+        switch (operator) {
+            case "plus":
+                return String.valueOf(Float.parseFloat(a) + Float.parseFloat(b));
+            case "minus":
+                return String.valueOf(Float.parseFloat(a) - Float.parseFloat(b));
+            case "times":
+                return String.valueOf(Float.parseFloat(a) * Float.parseFloat(b));
+            case "over":
+                return String.valueOf(Float.parseFloat(a) / Float.parseFloat(b));
+            case "mod":
+                return String.valueOf(Float.parseFloat(a) % Float.parseFloat(b));
+            default:
+                throw new IllegalArgumentException("Invalid operator: " + operator);
+        }
+    }
+    public static String applyComparison(String a, String b, String op) {
+        if (!a.matches("true|false")&&!b.matches("true|false"))
+        {
+            double left = Double.parseDouble(a);
+            double right = Double.parseDouble(b);
+
+            switch (op) {
+                case "is":
+                    return String.valueOf(left == right);
+                case "isnt":
+                    return String.valueOf(left != right);
+                case "less":
+                    return String.valueOf(left < right);
+                case "more":
+                    return String.valueOf(left > right);
+                case "lesseq":
+                    return String.valueOf(left <= right);
+                case "moreeq":
+                    return String.valueOf(left >= right);
+                default:
+                    throw new IllegalArgumentException("Unknown comparison operator: " + op);
+            }
+        }
+        else
+        {
+            boolean left = Boolean.getBoolean(a);
+            boolean right = Boolean.getBoolean(b);
+
+            switch (op) {
+                case "is":
+                    return left == right ? "true" : "false";
+                case "isnt":
+                    return left == right ? "true" : "false";
+                default:
+                    throw new IllegalArgumentException("Unknown comparison operator: " + op);
+            }
+        }
     }
 }
