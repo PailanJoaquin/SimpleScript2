@@ -32,6 +32,9 @@ public class SymbolTable {
         }
         return types.get(name);
     }
+    public boolean contains(String name) {
+        return variables.containsKey(name);
+    }
 
     public void printSymbols() {
         System.out.println("=======Symbol Table=======");

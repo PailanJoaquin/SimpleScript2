@@ -1,10 +1,5 @@
-let int a;
-let int b;
 let bool c;
-let string d;
-d be "hello";
-c be yes;
-a be 10 plus (10 plus 10);
-b be 20;
+c be 10 is 10;
+show(c);
 
-show (a);
+

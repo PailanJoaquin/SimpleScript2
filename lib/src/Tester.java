@@ -45,7 +45,6 @@ public class  Tester {
             tokens.add(token);
 
         }
-        System.out.println("============OUTPUT============");
         Parser parser = new Parser(table.getTable(),tokens);
         parser.parse();
         parser.visualizeAST();

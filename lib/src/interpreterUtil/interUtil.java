@@ -2,8 +2,7 @@ package lib.src.interpreterUtil;
 
 import lib.src.tokenutil.Token;
 
-import java.util.Iterator;
-import java.util.List;
+
 import java.util.Stack;
 
 public class interUtil {
@@ -13,6 +12,9 @@ public class interUtil {
 
     public static boolean isBoolean(String word) {
         return word.matches("yes|no");
+    }
+    public static boolean isVariable(String word) {
+        return word.matches("[a-zA-Z_][a-zA-Z0-9_]*");
     }
 
     public static boolean isInteger(String word) {
@@ -29,52 +31,36 @@ public class interUtil {
 
     public static int precedence(String op) {
         switch (op) {
+            case "is":
+            case "isnt":
+            case "less":
+            case "more":
+            case "lesseq":
+            case "moreeq":
+                return 1;
             case "plus":
             case "minus":
-                return 1;
+                return 2;
             case "times":
             case "mod":
             case "over":
-                return 2;
+                return 3;
             default:
                 return -1;
         }
     }
 
-    public static String infixToPostfix(Stack<Token> infix) {
-        StringBuilder postfix = new StringBuilder();
-        Stack<String> stack = new Stack<>();
-
-        for (Token token : infix) {
-            if (isFloat(token.getLexeme()) || isInteger(token.getLexeme())) {
-                postfix.append(token.getLexeme()+" "); // Append operand
-            } else if (token.getLexeme() == "(") {
-                stack.push(token.getLexeme());
-            } else if (token.getLexeme() == ")") {
-                while (!stack.isEmpty() && stack.peek() != "(") {
-                    postfix.append(stack.pop()+" ");
-                }
-                stack.pop(); // Pop '('
-            } else if (isArithmeticOp(token.getLexeme())) {
-                while (!stack.isEmpty() && precedence(token.getLexeme()) <= precedence(stack.peek())) {
-                    postfix.append(stack.pop()+" ");
-                }
-                stack.push(token.getLexeme());
-            }
-        }
-
-        while (!stack.isEmpty()) {
-            postfix.append(stack.pop()+" ");
-        }
-        return postfix.toString();
+    public static boolean isComparisonOp(String op)
+    {
+        return op.equals("is") || op.equals("isnt") ||
+                op.equals("less") || op.equals("more") ||
+                op.equals("lesseq") || op.equals("moreeq");
     }
-
     public static String evaluatePostfix(String postfix) {
         Stack<String> stack = new Stack<>();
         String[] tokens = postfix.split("\\s+"); // Split by spaces to handle multi-digit numbers
         //System.out.println("Evaluating postfix expression: " + postfix);
-
-
+        String result="";
 
         for (String token : tokens) {
             if (isArithmeticOp(token)) {
@@ -83,12 +69,27 @@ public class interUtil {
                 String b = stack.pop();
 
                 // Apply the operator and push the result back
-                //System.out.println("Applying operator: " + a + " " + token + " " + b);
-                String result = applyOperatorInteger(a, b, token);
+                if(isInteger(a) && isInteger(b)){
+                    result = applyOperatorInteger(a, b, token);
+                }
+                else if(isFloat(a) || isFloat(b)){
+                    result = applyOperatorFloat(a, b, token);
+                }
+                else {
+                    throw new IllegalArgumentException("Type mismatch");
+                }
                 stack.push(result);
+            } else if (isComparisonOp(token)) {
+                String b = stack.pop();
+                String a = stack.pop();
+                result = applyComparison(a, b, token);
+                if(result.equals("true")) result="yes";
+                else if(result.equals("false")) result="no";
+                else throw new IllegalArgumentException("Type mismatch");
+                stack.push(result); // Push result as string "true"/"false"
+
             } else {
-                // It's an operand (number), push it onto the stack
-                stack.push(token);
+                stack.push(token); // Operand
             }
         }
 
@@ -125,6 +126,27 @@ public class interUtil {
                 return String.valueOf(Float.parseFloat(a) % Float.parseFloat(b));
             default:
                 throw new IllegalArgumentException("Invalid operator: " + operator);
+        }
+    }
+    public static String applyComparison(String a, String b, String op) {
+        double left = Double.parseDouble(a);
+        double right = Double.parseDouble(b);
+
+        switch (op) {
+            case "is":
+                return String.valueOf(left == right);
+            case "isnt":
+                return String.valueOf(left != right);
+            case "less":
+                return String.valueOf(left < right);
+            case "more":
+                return String.valueOf(left > right);
+            case "lesseq":
+                return String.valueOf(left <= right);
+            case "moreeq":
+                return String.valueOf(left >= right);
+            default:
+                throw new IllegalArgumentException("Unknown comparison operator: " + op);
         }
     }
 }

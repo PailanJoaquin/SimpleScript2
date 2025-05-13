@@ -32,7 +32,7 @@ public class Parser {
         stringInputStack4 = reverseStack(newInput);
         Stack<Token> interpreterStack = new Stack<>();
         interpreterStack.addAll(stringInputStack4);
-        interpreter = new Interpreter(interpreterStack);
+
         newInput = reverseStack(stringInputStack4);
         newInput.push(new Token(TokenType.EOF, "$", 0, 0));
         newInput = reverseStack(newInput);
@@ -110,13 +110,14 @@ public class Parser {
                 }
             }
         }
-
         if (newInput.size() == 1 && newInput.peek().getItem().equals("$")) {
-            //System.out.println("Input parsed successfully!");
+            System.out.println("Input parsed successfully!");
         } else {
             System.out.println("Syntax Error: Extra input remaining." + " at line " + newInput.peek().getLineNumber() + " and " +
                     "column " + newInput.peek().getColumnNumber());
         }
+        System.out.println("============OUTPUT============");
+        interpreter = new Interpreter(interpreterStack);
     }
 
     private boolean isTerminal(String symbol) {

@@ -61,7 +61,4 @@ COMPARISON_OP     -> less
 COMPARISON_OP     -> more
 COMPARISON_OP     -> lesseq
 COMPARISON_OP     -> moreeq
-LOGICAL_OP        -> and
-LOGICAL_OP        -> or
-LOGICAL_OP        -> not
 STOP_STMT         -> stop ;
