@@ -13,7 +13,6 @@ public class Parser {
     private Stack<Token> input;
     private Stack<Token> newInput = new Stack<>();
     private Stack<Token> stringInputStack4 = new Stack<>(); //FOR PHASE 4
-    private int counter = 0;
     private ASTNode root;
     private Stack<ASTNode> astNodeStack = new Stack<>();
     private Interpreter interpreter = new Interpreter();
@@ -31,6 +30,9 @@ public class Parser {
             newInput.push(token);
         }
         stringInputStack4 = reverseStack(newInput);
+        Stack<Token> interpreterStack = new Stack<>();
+        interpreterStack.addAll(stringInputStack4);
+        interpreter = new Interpreter(interpreterStack);
         newInput = reverseStack(stringInputStack4);
         newInput.push(new Token(TokenType.EOF, "$", 0, 0));
         newInput = reverseStack(newInput);
@@ -43,10 +45,8 @@ public class Parser {
                 stringInputStack.push(input.getItem());
             }
 
-            if (counter == 0) {
-                interpreter = new Interpreter(stringInputStack4);
-                counter++;
-            }
+
+
 
             System.out.println("Parsing Stack: " + parseStack);
             System.out.println("Input Stack: " + stringInputStack);
@@ -59,10 +59,10 @@ public class Parser {
                     parseStack.pop();
                     newInput.pop();
                 } else if (top.equals("ε")) {
-                    System.out.println("Removing ε : " + top);
+                    //System.out.println("Removing ε : " + top);
                     parseStack.pop();
                 } else if (top.equals(currentInput)) {
-                    System.out.println("Match: " + top);
+                    //System.out.println("Match: " + top);
                     parseStack.pop();
                     newInput.pop();
                 } else {
@@ -77,7 +77,7 @@ public class Parser {
                     String prod = tempProd[1].trim();
                     String[] rhs = prod.equals("ε") ? new String[0] : prod.split(" ");
 
-                    System.out.println("Applying rule: " + top + " -> " + prod);
+                    //System.out.println("Applying rule: " + top + " -> " + prod);
 
                     ASTNode currentNode = new ASTNode(top);
                     if (root == null) {

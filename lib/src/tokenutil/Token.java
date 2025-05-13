@@ -41,6 +41,10 @@ public class Token {
         {
             terminals.add(item.getStringValue());
         }
+        if (type == TokenType.LITERAL) //CHECKS IF LITERAL
+        {
+            return "LITERAL";
+        }
         if (terminals.contains(lexeme)) //IF KEYWORD OR PUNCTATION OR ANY TERMINALS, RETURN AS IT IS
         {
             return lexeme.toString();
@@ -48,10 +52,6 @@ public class Token {
         if (type == TokenType.IDENTIFIER) //CHECKS IF IDENTIFIER
         {
             return type.toString();
-        }
-        if (type == TokenType.LITERAL) //CHECKS IF LITERAL
-        {
-            return "INT";
         }
         if(type == TokenType.EOF)
         {

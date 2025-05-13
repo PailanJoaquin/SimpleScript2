@@ -6,9 +6,9 @@ import java.util.Map;
 
 public class SymbolTable {
     private Map<String, Object> variables = new HashMap<>();
-    private Map<String, TokenType> types = new HashMap<>();
+    private Map<String, String> types = new HashMap<>();
 
-    public void define(String name, Object value, TokenType type) {
+    public void define(String name, Object value, String type) {
         variables.put(name, value);
         types.put(name, type);
     }
@@ -26,11 +26,17 @@ public class SymbolTable {
         }
         return variables.get(name);
     }
+    public String getType(String name) {
+        if (!variables.containsKey(name)) {
+            throw new RuntimeException("Variable not declared: " + name);
+        }
+        return types.get(name);
+    }
 
     public void printSymbols() {
         System.out.println("=======Symbol Table=======");
         for (String key : variables.keySet()) {
-            System.out.println(key + " = " + variables.get(key));
+            System.out.println(key + " = " + variables.get(key) + " (" + types.get(key) + ")");
         }
     }
 }

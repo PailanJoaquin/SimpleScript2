@@ -1,18 +1,8 @@
 let int a;
 let int b;
-let int sum;
-let int difference;
-let int product;
-let int quotient;
-
-a be 20;
-b be 5;
-
-sum be a plus b;
-difference be a minus b;
-product be a times b;
-quotient be a over b;
-
-repeat ( let int i be 0 ; i less 3 ; i be i plus 1 ) {
-    show(i);
-}
+let bool c;
+let string d;
+d be "hello";
+c be yes;
+a be 10 plus (10 plus 10);
+b be 20;

@@ -32,7 +32,7 @@ DATA_TYPE         -> float
 DATA_TYPE         -> bool
 IO_STMT           -> SHOW_FUNC
 IO_STMT           -> GIVE_FUNC
-SHOW_FUNC         -> show ( IDENTIFIER ) ;
+SHOW_FUNC         -> show ( EXPR ) ;
 GIVE_FUNC         -> give ( IDENTIFIER ) ;
 FUNC_DEC          -> task RETURN_TYPE IDENTIFIER ( PARAMS ) { STMT_PRIME }
 RETURN_TYPE       -> void
@@ -54,10 +54,7 @@ TERM_PRIME        -> mod FACTOR TERM_PRIME
 TERM_PRIME        -> ε
 FACTOR            -> ( EXPR )
 FACTOR            -> IDENTIFIER
-FACTOR            -> STRING
-FACTOR            -> INT
-FACTOR            -> FLOAT
-FACTOR            -> BOOL
+FACTOR            -> LITERAL
 COMPARISON_OP     -> is
 COMPARISON_OP     -> isnt
 COMPARISON_OP     -> less

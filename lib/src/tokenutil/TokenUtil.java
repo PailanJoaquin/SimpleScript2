@@ -12,11 +12,11 @@ public class TokenUtil {
     }
 
     public static boolean isLiteral(String word) {
-        return word.matches("[+-]?\\d+\\.\\d+")|| // Floats
-                word.matches("\\d+")|| // Integers
-                word.matches("[^\"]*\"")|| // Double-quoted strings
-                        word.matches("'[^']*'") || // Single-quoted strings
-                                word.matches("yes|no"); // Booleans
+        return  word.matches("\\d+")|| // Integers
+                word.matches("[+-]?\\d+\\.\\d+")|| // Floats
+                word.matches("\"([^\"]*)\"")|| // Double-quoted strings
+                word.matches("'[^']*'") || // Single-quoted strings
+                word.matches("yes|no"); // Booleans
     }
 
     public static boolean isIdentifier(String word, Set<String> TOKENS) {

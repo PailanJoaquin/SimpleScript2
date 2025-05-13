@@ -20,22 +20,22 @@ public class FirstFollowSetGenerator {
         calculateFollowSets();
         removeBracketsFollow();
 
-                    for (String key : grammar.keySet()) //DEBUG
-            {
-                System.out.println("Key: " + key + " -> Values: " + grammar.get(key));
-            }
-        Iterator<String> iterator = items.iterator();
-        while (iterator.hasNext())
-        {
-            String item = iterator.next();
-            System.out.println("FIRST("+ item + ") = " + firstSets.get(item));//DEBUG
-        }
-        Iterator<String> iterator2 = nonTerminals.iterator();
-        while (iterator2.hasNext())
-        {
-            String item = iterator2.next();
-            System.out.println("Follow("+ item + ") = " + followSets.get(item));//DEBUG
-        }
+//                    for (String key : grammar.keySet()) //DEBUG
+//            {
+//                System.out.println("Key: " + key + " -> Values: " + grammar.get(key));
+//            }
+//        Iterator<String> iterator = items.iterator();
+//        while (iterator.hasNext())
+//        {
+//            String item = iterator.next();
+//            System.out.println("FIRST("+ item + ") = " + firstSets.get(item));//DEBUG
+//        }
+//        Iterator<String> iterator2 = nonTerminals.iterator();
+//        while (iterator2.hasNext())
+//        {
+//            String item = iterator2.next();
+//            System.out.println("Follow("+ item + ") = " + followSets.get(item));//DEBUG
+//        }
     }
 
     // Read the grammar from a file
