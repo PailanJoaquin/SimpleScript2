@@ -2,8 +2,6 @@ package lib.src.interpreterUtil;
 
 import lib.src.tokenutil.Token;
 import lib.src.tokenutil.TokenType;
-import lib.src.interpreterUtil.interUtil.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -84,7 +82,6 @@ public class Interpreter {
             {
                 arithmeticStack.push(inputStack.pop());
             }
-        System.out.println("Arithmetic Stack: " + arithmeticStack);
         expression = evaluatePostfix(infixToPostfix(arithmeticStack));
         //EVALUATION
         return expression;

@@ -48,10 +48,10 @@ public class Parser {
 
 
 
-            System.out.println("Parsing Stack: " + parseStack);
-            System.out.println("Input Stack: " + stringInputStack);
-            System.out.println("Top of the Parsing Stack: " + top);
-            System.out.println("Top of the Input Stack: " + currentInput);
+//            System.out.println("Parsing Stack: " + parseStack);
+//            System.out.println("Input Stack: " + stringInputStack);
+//            System.out.println("Top of the Parsing Stack: " + top);
+//            System.out.println("Top of the Input Stack: " + currentInput);
 
 
             if (isTerminal(top)) {
