@@ -48,6 +48,7 @@ public class  Tester {
         Parser parser = new Parser(table.getTable(),tokens);
         parser.parse();
         parser.visualizeAST();
+        parser.printSymbolTable();
 
 
     }

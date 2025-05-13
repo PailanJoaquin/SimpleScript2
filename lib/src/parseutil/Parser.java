@@ -3,7 +3,7 @@ package lib.src.parseutil;
 import java.util.Map;
 import java.util.Stack;
 
-import lib.src.interpreterUtil.SymbolTable;
+import lib.src.interpreterUtil.Interpreter;
 import lib.src.tokenutil.Token;
 import lib.src.tokenutil.TokenType;
 
@@ -12,10 +12,11 @@ public class Parser {
     private Stack<String> parseStack;
     private Stack<Token> input;
     private Stack<Token> newInput = new Stack<>();
+    private Stack<Token> stringInputStack4 = new Stack<>(); //FOR PHASE 4
+    private int counter = 0;
     private ASTNode root;
     private Stack<ASTNode> astNodeStack = new Stack<>();
-    private Stack<String> stringInputStack = new Stack<>();
-    private SymbolTable symbolTable = new SymbolTable();
+    private Interpreter interpreter = new Interpreter();
 
     public Parser(Map<String, Map<String, String>> parsingTable, Stack<Token> input) {
         this.parsingTable = parsingTable;
@@ -29,21 +30,29 @@ public class Parser {
         for (Token token : input) {
             newInput.push(token);
         }
+        stringInputStack4 = reverseStack(newInput);
+        newInput = reverseStack(stringInputStack4);
         newInput.push(new Token(TokenType.EOF, "$", 0, 0));
         newInput = reverseStack(newInput);
-
         // Process input string
         while (!parseStack.isEmpty()) {
             String top = parseStack.peek();
             String currentInput = newInput.peek().getItem();
+            Stack<String> stringInputStack = new Stack<>();
             for (Token input : newInput) {
                 stringInputStack.push(input.getItem());
+            }
+
+            if (counter == 0) {
+                interpreter = new Interpreter(stringInputStack4);
+                counter++;
             }
 
             System.out.println("Parsing Stack: " + parseStack);
             System.out.println("Input Stack: " + stringInputStack);
             System.out.println("Top of the Parsing Stack: " + top);
             System.out.println("Top of the Input Stack: " + currentInput);
+
 
             if (isTerminal(top)) {
                 if (currentInput.equals("$") && top.equals("START_PRIME")) {
@@ -126,6 +135,6 @@ public class Parser {
         ASTVisualizer.visualizeAST(root);
     }
     public void printSymbolTable() {
-        symbolTable.printSymbols();
+        interpreter.printSymbolTable();
     }
 }

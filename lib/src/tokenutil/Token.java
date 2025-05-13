@@ -57,6 +57,8 @@ public class Token {
         {
             return getLexeme();
         }
+        if(type == TokenType.LOOP)
+            return getLexeme();
         else
         {
             return type.toString();

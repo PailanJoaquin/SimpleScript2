@@ -1,27 +1,36 @@
 package lib.src.interpreterUtil;
 
+import lib.src.tokenutil.TokenType;
 import java.util.HashMap;
 import java.util.Map;
 
 public class SymbolTable {
-    private Map<String, Symbol> symbols;
+    private Map<String, Object> variables = new HashMap<>();
+    private Map<String, TokenType> types = new HashMap<>();
 
-    public SymbolTable() {
-        symbols = new HashMap<>();
+    public void define(String name, Object value, TokenType type) {
+        variables.put(name, value);
+        types.put(name, type);
     }
 
-    public void add(String lexeme, String tokenType) {
-        symbols.put(lexeme, new Symbol(lexeme, tokenType));
+    public void assign(String name, Object value) {
+        if (!variables.containsKey(name)) {
+            throw new RuntimeException("Variable not declared: " + name);
+        }
+        variables.put(name, value);
     }
 
-    public boolean contains(String lexeme) {
-        return symbols.containsKey(lexeme);
+    public Object get(String name) {
+        if (!variables.containsKey(name)) {
+            throw new RuntimeException("Variable not declared: " + name);
+        }
+        return variables.get(name);
     }
 
     public void printSymbols() {
-        System.out.println("\n--- Symbol Table ---");
-        for (Symbol symbol : symbols.values()) {
-            System.out.println(symbol);
+        System.out.println("=======Symbol Table=======");
+        for (String key : variables.keySet()) {
+            System.out.println(key + " = " + variables.get(key));
         }
     }
 }

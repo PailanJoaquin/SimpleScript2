@@ -37,6 +37,7 @@ public enum SetTerminals {
     and ("and"),
     or ("or"),
     not ("not"),
+    repeat ("repeat"),
     stop ("stop");
 
     private final String stringValue;

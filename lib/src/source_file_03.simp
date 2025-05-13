@@ -12,3 +12,7 @@ sum be a plus b;
 difference be a minus b;
 product be a times b;
 quotient be a over b;
+
+repeat ( let int i be 0 ; i less 3 ; i be i plus 1 ) {
+    show(i);
+}

@@ -20,7 +20,7 @@ public enum SetItems {
     let ("let"),
     IDENTIFIER ("IDENTIFIER"),
     be ("be"),
-
+    repeat ("repeat"),
     semicolon (";"),
     return_ ("return"),
     string_ ("string"),
