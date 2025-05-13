@@ -3,6 +3,7 @@ package lib.src.parseutil;
 import java.util.Map;
 import java.util.Stack;
 
+import lib.src.interpreterUtil.SymbolTable;
 import lib.src.tokenutil.Token;
 import lib.src.tokenutil.TokenType;
 
@@ -14,6 +15,7 @@ public class Parser {
     private ASTNode root;
     private Stack<ASTNode> astNodeStack = new Stack<>();
     private Stack<String> stringInputStack = new Stack<>();
+    private SymbolTable symbolTable = new SymbolTable();
 
     public Parser(Map<String, Map<String, String>> parsingTable, Stack<Token> input) {
         this.parsingTable = parsingTable;
@@ -122,5 +124,8 @@ public class Parser {
 
     public void visualizeAST() {
         ASTVisualizer.visualizeAST(root);
+    }
+    public void printSymbolTable() {
+        symbolTable.printSymbols();
     }
 }

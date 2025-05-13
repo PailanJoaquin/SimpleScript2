@@ -1,4 +1,4 @@
-package lib.src.tokenutil;
+package lib.src.interpreterUtil;
 
 public class Symbol {
     private String lexeme;

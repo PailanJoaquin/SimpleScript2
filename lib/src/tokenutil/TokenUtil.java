@@ -12,8 +12,8 @@ public class TokenUtil {
     }
 
     public static boolean isLiteral(String word) {
-        return word.matches("\\d+") || // Integers
-                word.matches("[+-]?\\d+\\.\\d+") || // Floats
+        return word.matches("[+-]?\\d+\\.\\d+")|| // Floats
+                word.matches("\\d+")|| // Integers
                 word.matches("[^\"]*\"")|| // Double-quoted strings
                         word.matches("'[^']*'") || // Single-quoted strings
                                 word.matches("yes|no"); // Booleans

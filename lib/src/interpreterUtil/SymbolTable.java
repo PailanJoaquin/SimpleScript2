@@ -1,4 +1,4 @@
-package lib.src.tokenutil;
+package lib.src.interpreterUtil;
 
 import java.util.HashMap;
 import java.util.Map;

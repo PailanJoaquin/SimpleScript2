@@ -11,13 +11,10 @@ import lib.src.tokenutil.*;
 
 public class SimpleScanner {
     private Scanner scanner;
-    private SymbolTable symbolTable;
     private static final Set<String> TOKENS = new HashSet<>();
     private int lineNumber = 1;
     private int columnNumber = 1;
     private StringBuilder unreadBuffer = new StringBuilder(); // For unreading characters
-    private static String currentToken = "";
-
     static {
         for (Terminals token : Terminals.values()) {
             TOKENS.add(token.name().toLowerCase());
@@ -37,7 +34,6 @@ public class SimpleScanner {
 
     public SimpleScanner(String filePath) throws FileNotFoundException {
         this.scanner = new Scanner(new File(filePath));
-        this.symbolTable = new SymbolTable();
         this.scanner.useDelimiter("");
     }
 
@@ -165,15 +161,6 @@ public class SimpleScanner {
                     + (columnNumber - token.length()));
             return null;
         }
-        if (type == TokenType.LITERAL) {
-            symbolTable.add(currentToken, token);
-            currentToken = "";
-        }
-        else if (type == TokenType.IDENTIFIER) //CHECKS IF IDENTIFIER
-        {
-            currentToken = token;
-        }
-
 
 
         return new Token(type, token, lineNumber, columnNumber - token.length() + 1);
@@ -200,7 +187,4 @@ public class SimpleScanner {
         }
     }
 
-    public SymbolTable getSymbolTable() {
-        return symbolTable;
-    }
 }

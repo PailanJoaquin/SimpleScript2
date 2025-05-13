@@ -49,8 +49,6 @@ public class  Tester {
         parser.parse();
         parser.visualizeAST();
 
-        SymbolTable symbolTable1 = scanner.getSymbolTable();
-        symbolTable1.printSymbols();
 
     }
 }
