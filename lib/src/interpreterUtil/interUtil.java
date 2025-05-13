@@ -72,7 +72,7 @@ public class interUtil {
     public static String evaluatePostfix(String postfix) {
         Stack<String> stack = new Stack<>();
         String[] tokens = postfix.split("\\s+"); // Split by spaces to handle multi-digit numbers
-        System.out.println("Evaluating postfix expression: " + postfix);
+        //System.out.println("Evaluating postfix expression: " + postfix);
 
 
 
@@ -83,7 +83,7 @@ public class interUtil {
                 String b = stack.pop();
 
                 // Apply the operator and push the result back
-                System.out.println("Applying operator: " + a + " " + token + " " + b);
+                //System.out.println("Applying operator: " + a + " " + token + " " + b);
                 String result = applyOperatorInteger(a, b, token);
                 stack.push(result);
             } else {
@@ -95,7 +95,7 @@ public class interUtil {
         // The final result will be the only element left in the stack
         return stack.pop();
     }
-    private static String applyOperatorInteger(String a, String b, String operator) {
+    private static String applyOperatorInteger(String b, String a, String operator) {
         switch (operator) {
             case "plus":
                     return String.valueOf(Integer.parseInt(a) + Integer.parseInt(b));
@@ -111,18 +111,18 @@ public class interUtil {
                 throw new IllegalArgumentException("Invalid operator: " + operator);
         }
     }
-    private static String applyOperatorFloat(String a, String b, String operator) {
+    private static String applyOperatorFloat(String b, String a, String operator) {
         switch (operator) {
             case "plus":
-                return String.valueOf(Float.parseFloat(a) + Float.parseFloat(a));
+                return String.valueOf(Float.parseFloat(a) + Float.parseFloat(b));
             case "minus":
-                return String.valueOf(Float.parseFloat(a) - Float.parseFloat(a));
+                return String.valueOf(Float.parseFloat(a) - Float.parseFloat(b));
             case "times":
-                return String.valueOf(Float.parseFloat(a) * Float.parseFloat(a));
+                return String.valueOf(Float.parseFloat(a) * Float.parseFloat(b));
             case "over":
-                return String.valueOf(Float.parseFloat(a) / Float.parseFloat(a));
+                return String.valueOf(Float.parseFloat(a) / Float.parseFloat(b));
             case "mod":
-                return String.valueOf(Float.parseFloat(a) % Float.parseFloat(a));
+                return String.valueOf(Float.parseFloat(a) % Float.parseFloat(b));
             default:
                 throw new IllegalArgumentException("Invalid operator: " + operator);
         }

@@ -112,7 +112,7 @@ public class Parser {
         }
 
         if (newInput.size() == 1 && newInput.peek().getItem().equals("$")) {
-            System.out.println("Input parsed successfully!");
+            //System.out.println("Input parsed successfully!");
         } else {
             System.out.println("Syntax Error: Extra input remaining." + " at line " + newInput.peek().getLineNumber() + " and " +
                     "column " + newInput.peek().getColumnNumber());

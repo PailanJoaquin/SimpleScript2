@@ -22,10 +22,12 @@ public class Interpreter {
     public void evaluate() {
         while (!inputStack.isEmpty()) {
             Token current = inputStack.peek(); // Look at the top
-            System.out.println("Evaluating " + current.getItem());
+            //System.out.println("Evaluating " + current.getItem());//DEBUG
             switch (current.getItem()) {
                 case "let" : handleDeclaration(); break;
                 case "IDENTIFIER" : handleAssignmentOrExpression(); break;
+                case "show" : handleShow(); break;
+                case "give" : handleGive(); break;
 
                 default:
                     throw new RuntimeException("Unexpected token: " + current.getLexeme() + " at line" + current.getLineNumber() + "and column" + current.getColumnNumber());
@@ -73,6 +75,30 @@ public class Interpreter {
             throw new RuntimeException("Expected ';' after expression at line " + semicolon.getLineNumber() + " and column " + semicolon.getColumnNumber());
 
         symbolTable.assign(identifier.getLexeme(), value); // Update value
+    }
+    private void handleShow() {
+        inputStack.pop(); // show
+        inputStack.pop(); // (
+        Token var = inputStack.pop(); // IDENTIFIER
+        inputStack.pop(); // )
+        inputStack.pop(); // ;
+
+        Object value = symbolTable.get(var.getLexeme());
+        System.out.println(value);
+    }
+
+    private void handleGive() {
+        inputStack.pop(); // give
+        inputStack.pop(); // (
+        Token var = inputStack.pop(); // IDENTIFIER
+        inputStack.pop(); // )
+        inputStack.pop(); // ;
+
+        System.out.print("Enter value for " + var.getLexeme() + ": ");
+        java.util.Scanner scanner = new java.util.Scanner(System.in);
+        String input = scanner.nextLine();
+
+        symbolTable.assign(var.getLexeme(), input); // assume string input
     }
     private Object evaluateExpression() {
         Stack <Token> arithmeticStack = new Stack<>();

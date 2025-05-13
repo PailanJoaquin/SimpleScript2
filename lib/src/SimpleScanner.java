@@ -28,7 +28,7 @@ public class SimpleScanner {
         TOKENS.add("]");
         TOKENS.add(";");
         TOKENS.add(":");
-        System.out.println(TOKENS);
+        //System.out.println(TOKENS);
     }
 
 

@@ -55,7 +55,7 @@ public class LL1ParsingTableGenerator {
         }
 
         // Step 3: Write the parsing table to a CSV file
-        printParsingTable();
+        //printParsingTable();
     }
 
     private Set<String> getFirstSet(List<String> production) {
@@ -90,7 +90,7 @@ public class LL1ParsingTableGenerator {
                 String production = entry.getValue();
 
                 // Print the terminal and its corresponding production rule
-                System.out.println("  Terminal: " + terminal + " -> Production: " + production);
+                //System.out.println("  Terminal: " + terminal + " -> Production: " + production);
             }
             System.out.println();  // New line for better readability between non-terminals
         }

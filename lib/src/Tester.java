@@ -36,15 +36,16 @@ public class  Tester {
         Stack<Token> tokens = new Stack<>();
 
         // Print the tokens for debugging
-        System.out.println("Tokens:");
+        //System.out.println("Tokens:");
         Token token;
         int counter = 0;
 
         while ((token = scanner.getNextToken()) != null) {
-            System.out.println(token.toString() + "Token #"+counter++);
+            //System.out.println(token.toString() + "Token #"+counter++);
             tokens.add(token);
 
         }
+        System.out.println("============OUTPUT============");
         Parser parser = new Parser(table.getTable(),tokens);
         parser.parse();
         parser.visualizeAST();
