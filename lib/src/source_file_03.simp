@@ -1,14 +1,8 @@
-let int a;
-let int b;
-a be 30;
-b be 20;
-
 let bool c;
-c be a more b;
-show(c);
+c be yes;
 
 check (c is yes)
 {
-    show(b);
+    show(c);
 }
 

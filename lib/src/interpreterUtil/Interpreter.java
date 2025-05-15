@@ -30,6 +30,8 @@ public class Interpreter {
                 case "give" : handleGive(); break;
                 case "repeat" : handleForLoop(); break;
                 case "check": handleIfStatement(); break;
+                //case "task"
+                //case "while"
 
                 default:
                     throw new RuntimeException("Unexpected token: " + current.getLexeme() + " at line" + current.getLineNumber() + "and column" + current.getColumnNumber());
@@ -66,7 +68,6 @@ public class Interpreter {
             throw new RuntimeException("Expected 'be' at line" + be.getLineNumber() + " and column" + be.getColumnNumber());
         if (symbolTable.getType(identifier.getLexeme()).matches("String"))
         {
-            System.out.println("detected : " + identifier.getLexeme());
             value = inputStack.pop().getLexeme();
         }
         else
@@ -85,7 +86,6 @@ public class Interpreter {
         Token var = inputStack.pop(); // IDENTIFIER
         inputStack.pop(); // )
         inputStack.pop(); // ;
-
         Object value = symbolTable.get(var.getLexeme());
         System.out.println(value);
     }
@@ -145,9 +145,10 @@ public class Interpreter {
 
         // ---- Run the loop
         while (evaluateCondition(condVar, conditionExpr)) {
-            Interpreter bodyInterpreter = new Interpreter(bodyTokens);
+            Interpreter bodyInterpreter = new Interpreter();
             bodyInterpreter.symbolTable = loopTable; // share symbol table
-
+            bodyInterpreter.inputStack = bodyTokens;
+            bodyInterpreter.evaluate();
 
             // Re-evaluate updateExpr each loop
 
@@ -158,9 +159,9 @@ public class Interpreter {
             }
             tempStack = reverseStack(tempStack);
             Iterator<Token> tempIterator = tempStack.iterator();
-            while (tempIterator.hasNext()) {
-                inputStack.push(tempIterator.next());
-            }
+
+
+
             Object updatedValue = evaluateExpression();
             loopTable.assign(updateVar, updatedValue);
         }
@@ -188,8 +189,6 @@ public class Interpreter {
         }
         return;
     }
-
-
     private String infixToPostfix(Stack<Token> infix) {
         StringBuilder postfix = new StringBuilder();
         Stack<String> stack = new Stack<>();
@@ -307,9 +306,13 @@ public class Interpreter {
                     a = (String)symbolTable.get(a);
                     if (a == "yes")
                         a = "true";
+                    if (a == "no")
+                        a = "false";
                 }
                 if (isVariable(b)){
                     b = (String)symbolTable.get(b);
+                    if (b == "yes")
+                        b = "true";
                     if (b == "no")
                         b = "false";
                 }
@@ -360,7 +363,7 @@ public class Interpreter {
         }
     }
     public static String applyComparison(String a, String b, String op) {
-        if (!a.matches("true|false")&&!b.matches("true|false"))
+        if (!a.matches("true|false")&&!b.matches("yes|false"))
         {
             double left = Double.parseDouble(a);
             double right = Double.parseDouble(b);
