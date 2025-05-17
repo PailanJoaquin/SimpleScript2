@@ -116,8 +116,6 @@ public class Parser {
             System.out.println("Syntax Error: Extra input remaining." + " at line " + newInput.peek().getLineNumber() + " and " +
                     "column " + newInput.peek().getColumnNumber());
         }
-        System.out.println("============OUTPUT============");
-        interpreter = new Interpreter(interpreterStack);
     }
 
     private boolean isTerminal(String symbol) {
@@ -134,8 +132,5 @@ public class Parser {
 
     public void visualizeAST() {
         ASTVisualizer.visualizeAST(root);
-    }
-    public void printSymbolTable() {
-        interpreter.printSymbolTable();
     }
 }

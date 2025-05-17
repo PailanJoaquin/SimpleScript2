@@ -1,12 +1,6 @@
 let int a;
-a be 3;
 
-check (a is 3) {
-    let string text;
-    text be "a is 3";
-    show(text);
-} orcheck (a is 5) {
-    let string text;
-    text be "a is 5";
-    show(text);
-}
+a be 10 plus 10;
+
+show(a);
+

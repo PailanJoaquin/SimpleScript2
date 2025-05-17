@@ -7,6 +7,7 @@ import java.util.Map;
 public class SymbolTable {
     private Map<String, Object> variables = new HashMap<>();
     private Map<String, String> types = new HashMap<>();
+    //private Map<String, FunctionDefinition> functions = new HashMap<>();>
 
     public void define(String name, Object value, String type) {
         variables.put(name, value);

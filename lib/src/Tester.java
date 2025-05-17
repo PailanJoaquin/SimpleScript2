@@ -1,15 +1,16 @@
 package lib.src;
 
 import lib.src.generators.LL1ParsingTableGenerator;
+import lib.src.interpreterUtil.Interpreter;
 import lib.src.parseutil.ASTNode;
 import lib.src.parseutil.Parser;
 import lib.src.generators.FirstFollowSetGenerator;
+import lib.src.semanticutil.SemanticAnalyzer;
 import lib.src.tokenutil.*;
 import java.io.*;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
+
+import static lib.src.parseutil.Parser.reverseStack;
 
 public class  Tester {
 
@@ -34,6 +35,8 @@ public class  Tester {
         // Initializing and Declaration
         SimpleScanner scanner = new SimpleScanner(filePath);
         Stack<Token> tokens = new Stack<>();
+        Stack<Token> semanticTokens = new Stack<>();
+        Stack<Token> interpreterStack = new Stack<>();
 
         // Print the tokens for debugging
         //System.out.println("Tokens:");
@@ -45,12 +48,44 @@ public class  Tester {
             tokens.add(token);
 
         }
+
+        semanticTokens.addAll(tokens);
+        semanticTokens = reverseStack(semanticTokens);
+        interpreterStack.addAll(tokens);
+        interpreterStack = reverseStack(interpreterStack);
+
+        System.out.println(semanticTokens);
         Parser parser = new Parser(table.getTable(),tokens);
         parser.parse();
-        parser.visualizeAST();
-        parser.printSymbolTable();
 
+        try {
+            SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+            boolean semanticSuccess = semanticAnalyzer.analyze(semanticTokens);
+            semanticAnalyzer.printErrors();
 
+            // Generate AST only if semantic analysis passes or if there are only
+            // initialization errors for non-string variables
+            if (semanticSuccess || semanticAnalyzer.hasOnlyInitializationErrors()) {
+                System.out.println("\nGenerating AST Visualization...");
+                parser.visualizeAST();
+            }
+        }catch (Exception e) {
+            System.out.println("Error during semantic analysis: " + e.getMessage());
+        }
+        boolean isContinue = false;
+        while(!isContinue){
+            Scanner input = new Scanner(System.in);
+            System.out.println("Continue Runtime? (y/n)");
+            String response = input.nextLine();
+            if(response.equals("y"))
+                isContinue = true;
+            else if(response.equals("n"))
+                isContinue = true;
+            else;
+        }
+        Interpreter interpreter = new Interpreter(interpreterStack);
+        interpreter.printSymbolTable();
     }
 }
+
 

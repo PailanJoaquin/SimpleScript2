@@ -20,6 +20,7 @@ public class Interpreter {
     }
 
     public void evaluate() {
+        System.out.println("==============OUTPUT=============");
         while (!inputStack.isEmpty()) {
             Token current = inputStack.peek(); // Look at the top
             // System.out.println("Evaluating " + current.getItem());//DEBUG
@@ -39,7 +40,13 @@ public class Interpreter {
             }
         }
     }
+
+    private void handleWhile() {
+        inputStack.pop(); // consume 'while'
+    }
+
     private void handleDeclaration() {
+        // let int i;
         inputStack.pop(); // consume 'let'
         Token dataType = inputStack.pop(); // string, int, etc.
         Token identifier = inputStack.pop(); // variable name
@@ -88,8 +95,12 @@ public class Interpreter {
         Token var = inputStack.pop(); // IDENTIFIER
         inputStack.pop(); // )
         inputStack.pop(); // ;
+        Object value;
 
-        Object value = symbolTable.get(var.getLexeme());
+        if (symbolTable.contains(var.getLexeme())) {
+            value = symbolTable.get(var.getLexeme());
+        } else value = var.getLexeme();
+
         System.out.println(value);
     }
     private void handleGive() {
@@ -159,6 +170,7 @@ public class Interpreter {
             while (iterator.hasNext()) {
                 tempStack.push(iterator.next());
             }
+            tempStack.push(new Token(TokenType.PUNCTUATION, ";",0,0));
             tempStack = reverseStack(tempStack);
             Iterator<Token> tempIterator = tempStack.iterator();
             while (tempIterator.hasNext()) {
@@ -346,9 +358,7 @@ public class Interpreter {
             System.err.println("Error: Invalid value '" + value + "'");
         return false;
     }
-    public void printSymbolTable() {
-        symbolTable.printSymbols();
-    }
+
     public static Stack<Token> reverseStack(Stack<Token> originalStack) {
         Stack<Token> reversedStack = new Stack<>();
         while (!originalStack.isEmpty()) {
@@ -481,5 +491,11 @@ public class Interpreter {
                     throw new IllegalArgumentException("Unknown comparison operator: " + op);
             }
         }
+    }
+    public void printSymbolTable() {
+        symbolTable.printSymbols();
+    }
+    public void putSymbolTable (SymbolTable symbolTable) {
+        this.symbolTable = symbolTable;
     }
 }
