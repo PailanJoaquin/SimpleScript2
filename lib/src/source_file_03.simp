@@ -1,14 +1,12 @@
 let int a;
-let int b;
-a be 30;
-b be 20;
+a be 3;
 
-let bool c;
-c be a more b;
-show(c);
-
-check (c is yes)
-{
-    show(b);
+check (a is 3) {
+    let string text;
+    text be "a is 3";
+    show(text);
+} orcheck (a is 5) {
+    let string text;
+    text be "a is 5";
+    show(text);
 }
-

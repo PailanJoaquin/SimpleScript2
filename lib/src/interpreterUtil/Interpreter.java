@@ -22,7 +22,7 @@ public class Interpreter {
     public void evaluate() {
         while (!inputStack.isEmpty()) {
             Token current = inputStack.peek(); // Look at the top
-            //System.out.println("Evaluating " + current.getItem());//DEBUG
+            // System.out.println("Evaluating " + current.getItem());//DEBUG
             switch (current.getItem()) {
                 case "let" : handleDeclaration(); break;
                 case "IDENTIFIER" : handleAssignmentOrExpression(); break;
@@ -30,6 +30,9 @@ public class Interpreter {
                 case "give" : handleGive(); break;
                 case "repeat" : handleForLoop(); break;
                 case "check": handleIfStatement(); break;
+                case "orcheck": handleOrcheckStatement(); break;
+                case "otherwise": handleOtherwiseStatement(); break;
+                case "while": handleWhileStatement(); break;
 
                 default:
                     throw new RuntimeException("Unexpected token: " + current.getLexeme() + " at line" + current.getLineNumber() + "and column" + current.getColumnNumber());
@@ -166,27 +169,109 @@ public class Interpreter {
         }
     }
     private void handleIfStatement() {
+
+        // CHECK STATEMENT HANDLER
         inputStack.pop(); // pop 'check'
         inputStack.pop(); // pop '('
-        List<Token> conditionTokens = readTokensUntil(")");// read condition
-        Iterator<Token> iterator = conditionTokens.iterator();
-        Stack<Token> tempStack = new Stack<>();
-        while (iterator.hasNext()) {
-            tempStack.push(iterator.next());
+
+        List<Token> checkConditionTokens = readTokensUntil(")");// read condition
+        Iterator<Token> checkConditionIterator = checkConditionTokens.iterator();
+        Stack<Token> checkConditionStack = new Stack<>();
+        while (checkConditionIterator.hasNext()) {
+            checkConditionStack.push(checkConditionIterator.next());
         }
-        tempStack = reverseStack(tempStack);
+        checkConditionStack = reverseStack(checkConditionStack);
         inputStack.pop(); // pop '{'
-        Stack<Token> ifBody = readBlockTokens();
+        Stack<Token> checkBody = readBlockTokens();
 
         // Evaluate 'check' condition
-        boolean condition = toBoolean(evaluatePostfix(infixToPostfix(reverseStack(tempStack))));
-        if (condition) {
-            Interpreter ifInterpreter = new Interpreter();
-            ifInterpreter.symbolTable = this.symbolTable;
-            ifInterpreter.inputStack = reverseStack(ifBody);
-            ifInterpreter.evaluate();
+        boolean checkCondition = toBoolean(evaluatePostfix(infixToPostfix(reverseStack(checkConditionStack))));
+        if (checkCondition) {
+            Interpreter checkInterpreter = new Interpreter();
+            checkInterpreter.symbolTable = this.symbolTable;
+            checkInterpreter.inputStack = reverseStack(checkBody);
+            checkInterpreter.evaluate();
         }
-        return;
+
+        if (!checkCondition && inputStack.peek().getLexeme().equals("orcheck")) {
+                handleOrcheckStatement();
+        }
+
+
+    }
+
+    private void handleOrcheckStatement() {
+        inputStack.pop(); // pop 'orcheck'
+        inputStack.pop(); // pop '('
+        List<Token> orcheckConditionTokens = readTokensUntil(")");
+        Iterator<Token> orcheckConditionIterator = orcheckConditionTokens.iterator();
+        Stack<Token> orcheckConditionStack = new Stack<>();
+        while (orcheckConditionIterator.hasNext()) {
+            orcheckConditionStack.push(orcheckConditionIterator.next());
+        }
+        orcheckConditionStack = reverseStack(orcheckConditionStack);
+        inputStack.pop(); // pop '{'
+        Stack<Token> orcheckBody = readBlockTokens();
+
+        // Evaluate 'orcheck' condition
+        boolean orcheckCondition = toBoolean(evaluatePostfix(infixToPostfix(orcheckConditionStack)));
+        if (orcheckCondition) {
+            Interpreter orcheckInterpreter = new Interpreter();
+            orcheckInterpreter.symbolTable = this.symbolTable;
+            orcheckInterpreter.inputStack = reverseStack(orcheckBody);
+            orcheckInterpreter.evaluate();
+        }
+
+        if (!orcheckCondition && inputStack.peek().getLexeme().equals("otherwise")) handleOtherwiseStatement();
+    }
+
+    private void handleOtherwiseStatement() {
+        inputStack.pop(); // pop 'otherwise'
+        inputStack.pop(); // pop '{'
+
+        Stack<Token> otherwiseBody = readBlockTokens();
+
+        Interpreter otherwiseInterpreter = new Interpreter();
+        otherwiseInterpreter.symbolTable = this.symbolTable;
+        otherwiseInterpreter.inputStack = reverseStack(otherwiseBody);
+        otherwiseInterpreter.evaluate();
+    }
+
+    private void handleWhileStatement() {
+        inputStack.pop(); // pop 'while'
+        inputStack.pop(); // pop '('
+
+        // Read condition tokens until ')'
+        List<Token> conditionTokens = readTokensUntil(")");
+
+        // Prepare the condition stack (reverse for correct order)
+        Stack<Token> conditionStack = new Stack<>();
+        for (Token t : conditionTokens) {
+            conditionStack.push(t);
+        }
+        conditionStack = reverseStack(conditionStack);
+
+        inputStack.pop(); // pop '{'
+        Stack<Token> bodyTokens = readBlockTokens(); // get loop body
+        bodyTokens = reverseStack(bodyTokens);
+
+        while (toBoolean(evaluatePostfix(infixToPostfix(conditionStack)))) {
+            // Clone body tokens each time to avoid exhaustion
+            Stack<Token> loopBodyClone = new Stack<>();
+            loopBodyClone.addAll(bodyTokens);
+
+            Interpreter bodyInterpreter = new Interpreter();
+            bodyInterpreter.symbolTable = this.symbolTable; // share same symbol table
+            bodyInterpreter.inputStack = loopBodyClone;
+            bodyInterpreter.evaluate();
+
+            // Reset condition stack for re-evaluation
+            conditionStack = new Stack<>();
+            for (Token t : conditionTokens) {
+                conditionStack.push(t);
+            }
+            conditionStack = reverseStack(conditionStack);
+        }
     }
 
 
