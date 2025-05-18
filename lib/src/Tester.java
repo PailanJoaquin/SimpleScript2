@@ -2,6 +2,7 @@ package lib.src;
 
 import lib.src.generators.LL1ParsingTableGenerator;
 import lib.src.interpreterUtil.Interpreter;
+import lib.src.interpreterUtil.SymbolTable;
 import lib.src.parseutil.ASTNode;
 import lib.src.parseutil.Parser;
 import lib.src.generators.FirstFollowSetGenerator;
@@ -54,14 +55,12 @@ public class  Tester {
         interpreterStack.addAll(tokens);
         interpreterStack = reverseStack(interpreterStack);
 
-        System.out.println(semanticTokens);
         Parser parser = new Parser(table.getTable(),tokens);
         parser.parse();
+        SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
 
         try {
-            SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
             boolean semanticSuccess = semanticAnalyzer.analyze(semanticTokens);
-            semanticAnalyzer.printErrors();
 
             // Generate AST only if semantic analysis passes or if there are only
             // initialization errors for non-string variables
@@ -72,19 +71,26 @@ public class  Tester {
         }catch (Exception e) {
             System.out.println("Error during semantic analysis: " + e.getMessage());
         }
+        semanticAnalyzer.printErrors();
         boolean isContinue = false;
         while(!isContinue){
             Scanner input = new Scanner(System.in);
             System.out.println("Continue Runtime? (y/n)");
             String response = input.nextLine();
             if(response.equals("y"))
+            {
+                System.out.println("==============OUTPUT=============");
+                Interpreter interpreter = new Interpreter();
+                interpreter.putSymbolTable(semanticAnalyzer.getSymbolTable());
+                interpreter.putInputStack(interpreterStack);
+                interpreter.evaluate();
+                interpreter.printSymbolTable();
                 isContinue = true;
+            }
             else if(response.equals("n"))
                 isContinue = true;
-            else;
         }
-        Interpreter interpreter = new Interpreter(interpreterStack);
-        interpreter.printSymbolTable();
+        System.out.println("Program Complete");
     }
 }
 

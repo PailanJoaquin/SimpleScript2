@@ -51,6 +51,7 @@ TERM_PRIME        -> ε
 FACTOR            -> ( EXPR )
 FACTOR            -> IDENTIFIER
 FACTOR            -> LITERAL
+FACTOR            -> LITERAL
 COMPARISON_OP     -> is
 COMPARISON_OP     -> isnt
 COMPARISON_OP     -> less

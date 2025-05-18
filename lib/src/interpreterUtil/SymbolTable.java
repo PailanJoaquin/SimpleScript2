@@ -1,13 +1,15 @@
 package lib.src.interpreterUtil;
 
+import lib.src.tokenutil.Token;
 import lib.src.tokenutil.TokenType;
-import java.util.HashMap;
-import java.util.Map;
+
+import java.util.*;
 
 public class SymbolTable {
     private Map<String, Object> variables = new HashMap<>();
     private Map<String, String> types = new HashMap<>();
-    //private Map<String, FunctionDefinition> functions = new HashMap<>();>
+    private Map<String, Stack<Token>> functionsStack = new HashMap<>();
+    private List<String> functions = new ArrayList<>();
 
     public void define(String name, Object value, String type) {
         variables.put(name, value);
@@ -19,6 +21,10 @@ public class SymbolTable {
             throw new RuntimeException("Variable not declared: " + name);
         }
         variables.put(name, value);
+    }
+    public void assignFunction(String name, List<String> body, String type) {
+        variables.put(name, type);
+        types.put(name, "function");
     }
 
     public Object get(String name) {

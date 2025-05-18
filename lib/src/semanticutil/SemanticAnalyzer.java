@@ -12,6 +12,7 @@ public class SemanticAnalyzer {
     private Stack<Token> tokens;
     private Token currentToken;
     private String lastProcessedIdentifier;
+    private SymbolTable interpreterTable;
 
     public SemanticAnalyzer() {
         this.errors = new ArrayList<>();
@@ -173,7 +174,7 @@ public class SemanticAnalyzer {
             for (String error : errors) {
                 System.out.println(error);
             }
-            return;  // Don't print symbol table if there are errors
+            //return;  // Don't print symbol table if there are errors
         }
 
         if (!warnings.isEmpty()) {
@@ -183,17 +184,34 @@ public class SemanticAnalyzer {
             }
         }
 
+
+
+
         // Convert the existing symbolTable to the format used by SymbolTable class
         SymbolTable table = new SymbolTable();
         for (Map.Entry<String, VariableInfo> entry : symbolTable.entrySet()) {
             String name = entry.getKey();
             VariableInfo info = entry.getValue();
+            String type = null;
+            if (info.type.equals("int")) {
+                type = "Integer";
+            } else if (info.type.equals("float")) {
+                type = "Float";
+            } else if (info.type.equals("bool")) {
+                type = "Boolean";
+            } else if(info.type.equals("string")) {
+                type = "String";
+            }
+            else {
+                System.out.println("Unknown type: " + info.type);
+            }
+
             String value = info.value != null ? info.value : "";
-            table.define(name, value, info.type);
+            table.define(name, value, type);
         }
 
         // Use SymbolTable's printSymbols method
-        //table.printSymbols();
+        interpreterTable = table;
     }
 
 
@@ -500,7 +518,7 @@ public class SemanticAnalyzer {
         }
     }
 
-    public Map<String, VariableInfo> getSymbolTable() {
-        return symbolTable;
+    public SymbolTable getSymbolTable() {
+        return interpreterTable;
     }
 }

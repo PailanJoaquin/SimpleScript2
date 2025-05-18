@@ -20,7 +20,6 @@ public class Interpreter {
     }
 
     public void evaluate() {
-        System.out.println("==============OUTPUT=============");
         while (!inputStack.isEmpty()) {
             Token current = inputStack.peek(); // Look at the top
             // System.out.println("Evaluating " + current.getItem());//DEBUG
@@ -54,20 +53,23 @@ public class Interpreter {
         Token semicolon = inputStack.pop(); // ;
         String type;
 
-        if (dataType.getLexeme().equals("string"))
-            type = "String";
-        else if (dataType.getLexeme().equals("int"))
-            type = "Integer";
-        else if (dataType.getLexeme().equals("float"))
-            type = "Float";
-        else if (dataType.getLexeme().equals("bool"))
-            type = "Boolean";
-        else
-            throw new RuntimeException("Unknown data type: " + dataType.getLexeme() + " at line " + dataType.getLineNumber() + "and column " + dataType.getColumnNumber());
+//        if (symbolTable.contains(identifier.getLexeme()))
+//        {
+//            type = symbolTable.getType(identifier.getLexeme());
+//        }
+//        else if (dataType.getLexeme().equals("string"))
+//            type = "String";
+//        else if (dataType.getLexeme().equals("int"))
+//            type = "Integer";
+//        else if (dataType.getLexeme().equals("float"))
+//            type = "Float";
+//        else if (dataType.getLexeme().equals("bool"))
+//            type = "Boolean";
+//        else
+//            throw new RuntimeException("Unknown data type: " + dataType.getLexeme() + " at line " + dataType.getLineNumber() + "and column " + dataType.getColumnNumber());
         if (semicolon.getType() != TokenType.PUNCTUATION)
             throw new RuntimeException("Expected ';' after declaration at " + semicolon.getLineNumber() + ":" + semicolon.getColumnNumber());
 
-        symbolTable.define(identifier.getLexeme(), null, type); // Save as null
     }
 
     private boolean functionChecker() {
@@ -85,6 +87,7 @@ public class Interpreter {
             throw new RuntimeException("Expected 'be' at line" + be.getLineNumber() + " and column" + be.getColumnNumber());
         if (symbolTable.getType(identifier.getLexeme()).matches("String"))
         {
+            System.out.println(symbolTable.getType(identifier.getLexeme()).matches("String"));
             System.out.println("detected : " + identifier.getLexeme());
             value = inputStack.pop().getLexeme();
         }
@@ -541,5 +544,8 @@ public class Interpreter {
     }
     public void putSymbolTable (SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
+    }
+    public void putInputStack (Stack<Token> inputStack) {
+        this.inputStack = inputStack;
     }
 }
