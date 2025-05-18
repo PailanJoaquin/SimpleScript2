@@ -12,6 +12,7 @@ SIMPLE_STMT       -> SKIP_STMT
 SIMPLE_STMT       -> FUNC_DEC
 SIMPLE_STMT       -> LOOP_STMT
 SIMPLE_STMT       -> IF_STMT
+SIMPLE_STMT       -> FUNC_CALL
 IF_STMT           -> check ( EXPR ) { STMT_PRIME }
 IF_STMT           -> check ( EXPR ) { STMT_PRIME } orcheck ( EXPR ) { STMT_PRIME }
 IF_STMT           -> check ( EXPR ) { STMT_PRIME } orcheck ( EXPR ) { STMT_PRIME } otherwise { STMT_PRIME }
@@ -59,3 +60,5 @@ COMPARISON_OP     -> more
 COMPARISON_OP     -> lesseq
 COMPARISON_OP     -> moreeq
 STOP_STMT         -> stop ;
+FUNC_CALL         -> FUNC_IDENTIFIER ( EXPR EXPR_PRIME )
+FUNC_CALL_PRIME   -> , EXPR EXPR_PRIME

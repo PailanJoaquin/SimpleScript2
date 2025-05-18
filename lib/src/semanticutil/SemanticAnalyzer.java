@@ -61,7 +61,15 @@ public class SemanticAnalyzer {
             case "give":
                 handleGive();
                 break;
+            case "task":
+                handleFunctionDeclaration();
+                break;
         }
+    }
+
+    private void handleFunctionDeclaration() {
+        while(!tokens.isEmpty() && !tokens.peek().getLexeme().equals("}"))
+            tokens.pop();
     }
 
     private void handleGive() {
@@ -147,17 +155,18 @@ public class SemanticAnalyzer {
             VariableInfo info = symbolTable.get(varName);
             if (info == null) {
                 addError("Variable '" + varName + "' not declared", currentToken);
-            } else if (!info.initialized) {
-                if (info.type.equals("string")) {
-                    addError("String variable '" + varName + "' must be initialized before use", currentToken);
-                } else if (info.type.equals("bool")) {
-                    addWarning("Variable " + varName + " not initialized. Boolean Variable '" + varName + "' defaults to 'no'", currentToken);
-                } else if (info.type.equals("int")) {
-                    addWarning("Variable " + varName + " not initialized. Int Variable '" + varName + "' defaults to '0'", currentToken);
-                } else if (info.type.equals("float")) {
-                    addWarning("Variable " + varName + " not initialized. Float Variable '" + varName + "' defaults to '0.0'", currentToken);
-                }
             }
+//            else if (!info.initialized) {
+//                if (info.type.equals("string")) {
+//                    addError("String variable '" + varName + "' must be initialized before use", currentToken);
+//                } else if (info.type.equals("bool")) {
+//                    addWarning("Variable " + varName + " not initialized. Boolean Variable '" + varName + "' defaults to 'no'", currentToken);
+//                } else if (info.type.equals("int")) {
+//                    addWarning("Variable " + varName + " not initialized. Int Variable '" + varName + "' defaults to '0'", currentToken);
+//                } else if (info.type.equals("float")) {
+//                    addWarning("Variable " + varName + " not initialized. Float Variable '" + varName + "' defaults to '0.0'", currentToken);
+//                }
+//            }
         }
 
         while (!tokens.isEmpty() && !tokens.peek().getLexeme().equals(";")) {
@@ -221,10 +230,6 @@ public class SemanticAnalyzer {
 
         if (assignmentToken.getLexeme().equals("be")) {
             VariableInfo info = symbolTable.get(varName);
-            if (info == null) {
-                addError("Variable '" + varName + "' not declared", assignmentToken);
-                return;
-            }
 
             List<Token> expressionTokens = new ArrayList<>();
             while (!tokens.isEmpty()) {
@@ -238,6 +243,36 @@ public class SemanticAnalyzer {
                 expressionTokens.add(tokens.pop());
             }
 
+            if (info == null) {
+                // Implicit type declaration from context
+                if (!expressionTokens.isEmpty()) {
+                    Token first = expressionTokens.get(0);
+                    String type = null;
+                    String value = first.getLexeme();
+                    if (first.getType() == TokenType.LITERAL) {
+                        if (isValidStringValue(value)) {
+                            type = "string";
+                        } else if (isValidBooleanValue(value)) {
+                            type = "bool";
+                        } else if (value.contains(".") && isValidFloatValue(value)) {
+                            type = "float";
+                        } else if (isValidIntValue(value)) {
+                            type = "int";
+                        }
+                    }
+                    if (type != null) {
+                        VariableInfo newInfo = new VariableInfo(type, value, true);
+                        symbolTable.put(varName, newInfo);
+                        if (!tokens.isEmpty() && tokens.peek().getLexeme().equals(";")) {
+                            tokens.pop();
+                        }
+                        return;
+                    }
+                }
+                addError("Variable '" + varName + "' not declared", assignmentToken);
+                return;
+            }
+
             if (info.type.equals("int")) {
                 try {
                     int result = evaluateExpression(expressionTokens);
@@ -246,7 +281,6 @@ public class SemanticAnalyzer {
                 } catch (IllegalArgumentException e) {
                     addError(e.getMessage(), assignmentToken);
                     info.initialized = false;
-                    // Only add the warning about invalid integer value
                     if (e.getMessage().contains("Invalid integer value")) {
                         addWarning(e.getMessage() + ". Defaulting to '0'", assignmentToken);
                     }

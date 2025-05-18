@@ -15,7 +15,6 @@ public class Parser {
     private Stack<Token> stringInputStack4 = new Stack<>(); //FOR PHASE 4
     private ASTNode root;
     private Stack<ASTNode> astNodeStack = new Stack<>();
-    private Interpreter interpreter = new Interpreter();
 
     public Parser(Map<String, Map<String, String>> parsingTable, Stack<Token> input) {
         this.parsingTable = parsingTable;

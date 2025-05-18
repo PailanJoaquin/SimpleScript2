@@ -65,8 +65,8 @@ public class  Tester {
             // Generate AST only if semantic analysis passes or if there are only
             // initialization errors for non-string variables
             if (semanticSuccess || semanticAnalyzer.hasOnlyInitializationErrors()) {
-                System.out.println("\nGenerating AST Visualization...");
-                parser.visualizeAST();
+                //System.out.println("\nGenerating AST Visualization...");
+                //parser.visualizeAST();
             }
         }catch (Exception e) {
             System.out.println("Error during semantic analysis: " + e.getMessage());

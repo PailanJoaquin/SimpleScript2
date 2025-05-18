@@ -1,3 +1,10 @@
-let int test;
+task void sum(int a, int b) {
+    show(a);
+    show(b);
+}
 
-test be 12 plus 9 test 10;
+let int a;
+let int b;
+a be 1;
+b be 2;
+sum(a,b);

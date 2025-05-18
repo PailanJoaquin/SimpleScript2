@@ -56,6 +56,6 @@ public class TokenUtil {
     }
 
     public static boolean isDelimiter(char c) {
-        return c == '(' || c == ')' || c == '{' || c == '}' || c == ';' || c == ',' || c == '[' || c == ']' || c == '.';
+        return c == '(' || c == ')' || c == '{' || c == '}' || c == ';' || c == ',' || c == '[' || c == ']';
     }
 }

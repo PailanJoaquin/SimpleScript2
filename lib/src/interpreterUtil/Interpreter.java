@@ -1,5 +1,6 @@
 package lib.src.interpreterUtil;
 
+import lib.src.semanticutil.SemanticAnalyzer;
 import lib.src.tokenutil.Token;
 import lib.src.tokenutil.TokenType;
 
@@ -12,7 +13,10 @@ public class Interpreter {
     SymbolTable symbolTable = new SymbolTable();
     SymbolTable loopTable = new SymbolTable();
     List<SymbolTable>loopTables = new ArrayList<>();
-    public Interpreter() {}
+    public Interpreter()
+    {
+
+    }
     public Interpreter(Stack<Token> inputStack)
     {
         this.inputStack = inputStack;
@@ -20,6 +24,7 @@ public class Interpreter {
     }
 
     public void evaluate() {
+        //System.out.println(inputStack);//DEBUG
         while (!inputStack.isEmpty()) {
             Token current = inputStack.peek(); // Look at the top
             // System.out.println("Evaluating " + current.getItem());//DEBUG
@@ -32,7 +37,7 @@ public class Interpreter {
                 case "check": handleIfStatement(); break;
                 case "orcheck": handleOrcheckStatement(); break;
                 case "otherwise": handleOtherwiseStatement(); break;
-                case "while": handleWhileStatement(); break;
+                case "while": handleWhile(); break;
                 case "task": handleFunctionDeclaration(); break;
 
                 default:
@@ -42,7 +47,30 @@ public class Interpreter {
     }
 
     private void handleWhile() {
-        inputStack.pop(); // consume 'while'
+        inputStack.pop(); // pop 'while'
+        inputStack.pop(); // pop '('
+
+        List<Token> checkConditionTokens = readTokensUntil(")");// read condition
+        Iterator<Token> checkConditionIterator = checkConditionTokens.iterator();
+        Stack<Token> checkConditionStack = new Stack<>();
+        while (checkConditionIterator.hasNext()) {
+            checkConditionStack.push(checkConditionIterator.next());
+        }
+        checkConditionStack = reverseStack(checkConditionStack);
+        inputStack.pop(); // pop '{'
+        Stack<Token> whileBody = readBlockTokens();
+
+        // Evaluate 'check' condition
+        boolean checkCondition = toBoolean(evaluatePostfix(infixToPostfix(reverseStack(checkConditionStack))));
+        Interpreter checkInterpreter = new Interpreter();
+        checkInterpreter.symbolTable = this.symbolTable;
+        checkInterpreter.inputStack = reverseStack(whileBody);
+        while (checkCondition) {
+            System.out.println("hi" + checkCondition);
+            checkInterpreter.evaluate();
+            checkCondition = toBoolean(evaluatePostfix(infixToPostfix(reverseStack(checkConditionStack))));
+        }
+
     }
 
     private void handleDeclaration() {
@@ -72,17 +100,20 @@ public class Interpreter {
 
     }
 
-    private boolean functionChecker() {
-        inputStack.pop(); // pop identifier
-        System.out.println(inputStack.peek().getLexeme());
-        System.out.println(inputStack.peek().getLexeme().equals("("));
-        return inputStack.peek().getLexeme().equals("(");
-    }
 
     private void handleAssignmentOrExpression() {
+        if(this.symbolTable != null )
+        {
+            if(symbolTable.isFunction(inputStack.peek().getLexeme())){
+                handleFunctionCall();
+                return;
+            }
+        }
+
         Token identifier = inputStack.pop(); // variable name
         Token be = inputStack.pop(); // "be"
-        Object value;
+        Object value = null;
+
         if (be.getType() != TokenType.ASSIGNMENT)
             throw new RuntimeException("Expected 'be' at line" + be.getLineNumber() + " and column" + be.getColumnNumber());
         if (symbolTable.getType(identifier.getLexeme()).matches("String"))
@@ -91,6 +122,7 @@ public class Interpreter {
             System.out.println("detected : " + identifier.getLexeme());
             value = inputStack.pop().getLexeme();
         }
+
         else
         {
             value = evaluateExpression(); // Evaluate expr until semicolon
@@ -261,55 +293,53 @@ public class Interpreter {
         otherwiseInterpreter.inputStack = reverseStack(otherwiseBody);
         otherwiseInterpreter.evaluate();
     }
-
-    private void handleWhileStatement() {
-        inputStack.pop(); // pop 'while'
+    private void handleFunctionCall() {
+        Token functionName = inputStack.pop();// pop function name
         inputStack.pop(); // pop '('
-
-        // Read condition tokens until ')'
-        List<Token> conditionTokens = readTokensUntil(")");
-
-        // Prepare the condition stack (reverse for correct order)
-        Stack<Token> conditionStack = new Stack<>();
-        for (Token t : conditionTokens) {
-            conditionStack.push(t);
+        List<Token> functionParams = readTokensUntil(")");
+        Iterator<Token> functionParamsIterator = functionParams.iterator();
+        Stack<Token> functionParamsStack = new Stack<>();
+        while (functionParamsIterator.hasNext()) {
+            functionParamsStack.push(functionParamsIterator.next());
         }
-        conditionStack = reverseStack(conditionStack);
+        functionParamsStack = reverseStack(functionParamsStack);
+        Interpreter functionInterpreter = new Interpreter();
+        try {
 
-        inputStack.pop(); // pop '{'
-        Stack<Token> bodyTokens = readBlockTokens(); // get loop body
-        bodyTokens = reverseStack(bodyTokens);
-
-        while (toBoolean(evaluatePostfix(infixToPostfix(conditionStack)))) {
-            // Clone body tokens each time to avoid exhaustion
-            Stack<Token> loopBodyClone = new Stack<>();
-            loopBodyClone.addAll(bodyTokens);
-
-            Interpreter bodyInterpreter = new Interpreter();
-            bodyInterpreter.symbolTable = this.symbolTable; // share same symbol table
-            bodyInterpreter.inputStack = loopBodyClone;
-            bodyInterpreter.evaluate();
-
-            // Reset condition stack for re-evaluation
-            conditionStack = new Stack<>();
-            for (Token t : conditionTokens) {
-                conditionStack.push(t);
+            functionInterpreter.symbolTable = symbolTable.getFunctionParameters(functionName.getLexeme());
+        } catch (Exception e) {
+            System.err.println("Error: Function '" + functionName.getLexeme() + "' not found. at line " + functionName.getLineNumber() + ", column " + functionName.getColumnNumber());
+        }
+        int paramCounter = 0;
+        while(!functionParamsStack.isEmpty()) {
+            if(functionParamsStack.peek().getType()==TokenType.IDENTIFIER) {
+                String paramValue = functionParamsStack.pop().getLexeme();
+                functionInterpreter.symbolTable.assign(String.valueOf(paramCounter),paramValue);
+                paramCounter++;
             }
-            conditionStack = reverseStack(conditionStack);
+            if(!functionParamsStack.isEmpty())
+            {
+                if(functionParamsStack.peek().getLexeme().equals(",")) {
+                    functionParamsStack.pop();
+                }
+            }
         }
+        SemanticAnalyzer functionSemanticAnalyzer = new SemanticAnalyzer();
+        Stack<Token> functionBody = symbolTable.getFunction(functionName.getLexeme());
+        functionInterpreter.putInputStack(reverseStack(functionBody));
+        functionSemanticAnalyzer.analyze(functionBody);
+        functionInterpreter.putSymbolTable(functionSemanticAnalyzer.getSymbolTable());
+        functionInterpreter.evaluate();
+        inputStack.pop(); //pop ';'
+        System.out.println(functionInterpreter.symbolTable);//debug
     }
 
     private void handleFunctionDeclaration() {
+        SymbolTable functionTable = new SymbolTable();
+
         inputStack.pop(); // pop 'task'
-
-        String returnType = inputStack.peek().getLexeme();
-        inputStack.pop(); // pop return type
-        System.out.println("Function return type: " + returnType); // DEBUG: Show function return type
-
-
-        String functionName = inputStack.peek().getLexeme();
-        inputStack.pop(); // pop function name
-        System.out.println("Function name: " + functionName);
+        String returnType = inputStack.pop().getLexeme();
+        String functionName = inputStack.pop().getLexeme();// pop function name
 
         inputStack.pop(); // pop '('
 
@@ -320,18 +350,47 @@ public class Interpreter {
             functionParamsStack.push(functionParamsIterator.next());
         }
         functionParamsStack = reverseStack(functionParamsStack);
+        int paramCounter = 0;
+        while(!functionParamsStack.isEmpty()) {
+            if(functionParamsStack.peek().getType()==TokenType.DATA_TYPE) {
+                String dataType = functionParamsStack.pop().getLexeme();
+                //System.out.println("Parameter name: " + paramCounter + ", Data Type: " + dataType);
+                functionTable.define(String.valueOf(paramCounter),null, dataType);
+                paramCounter++;
+                functionParamsStack.pop(); // pop ID;
+            }
+            if(!functionParamsStack.isEmpty())
+            {
+                if(functionParamsStack.peek().getLexeme().equals(","))
+                {
+                    functionParamsStack.pop();
+                }
+            }
+//            else
+//            {
+//                System.out.println(functionParamsStack);
+//            }
+        }
 
-        for (Token token : functionParamsStack) {
-            System.out.println(token.getLexeme());
+        switch (returnType) {
+            case "int":
+                returnType = "Integer";
+                break;
+            case "float":
+                returnType = "Float";
+                break;
+            case "string":
+                returnType = "String";
+                break;
+            case "bool":
+                returnType = "Boolean";
+                break;
         }
 
         inputStack.pop(); // pop '{'
-
-        Stack<Token> functionBodyTokens = readBlockTokens();
-        Interpreter functionBodyInterpreter = new Interpreter();
-        functionBodyInterpreter.symbolTable = this.symbolTable;
-        functionBodyInterpreter.inputStack = reverseStack(functionBodyTokens);
-        functionBodyInterpreter.evaluate();
+        Stack <Token>functionStack = readBlockTokens();
+        symbolTable.assignFunction(functionName,functionStack , returnType);
+        symbolTable.addFunctionParameters(functionName, functionTable);
     }
 
     private String infixToPostfix(Stack<Token> infix) {
@@ -402,11 +461,12 @@ public class Interpreter {
         else if (value.equals("no"))
             return false;
         else
-            System.err.println("Error: Invalid value '" + value + "'");
+            System.err.println("Error: Invalid value '" + value + "'" + "at line " + inputStack.peek().getLineNumber() +
+                    ", column " + inputStack.peek().getColumnNumber());
         return false;
     }
 
-    public static Stack<Token> reverseStack(Stack<Token> originalStack) {
+    public Stack<Token> reverseStack(Stack<Token> originalStack) {
         Stack<Token> reversedStack = new Stack<>();
         while (!originalStack.isEmpty()) {
             reversedStack.push(originalStack.pop());
@@ -439,7 +499,7 @@ public class Interpreter {
                     result = applyOperatorFloat(a, b, token);
                 }
                 else {
-                    throw new IllegalArgumentException("Type mismatch");
+                    throw new IllegalArgumentException("Type mismatch at line 10");
                 }
                 stack.push(result);
             } else if (isComparisonOp(token)) {
@@ -488,7 +548,7 @@ public class Interpreter {
     private static String applyOperatorFloat(String b, String a, String operator) {
         switch (operator) {
             case "plus":
-                return String.valueOf(Float.parseFloat(a) + Float.parseFloat(b));
+                return String .valueOf(Float.parseFloat(a) + Float.parseFloat(b));
             case "minus":
                 return String.valueOf(Float.parseFloat(a) - Float.parseFloat(b));
             case "times":
@@ -547,5 +607,9 @@ public class Interpreter {
     }
     public void putInputStack (Stack<Token> inputStack) {
         this.inputStack = inputStack;
+    }
+    public Object handleFunctionReturn() {
+        inputStack.pop(); // remove return token
+        return symbolTable.get(inputStack.pop().getLexeme());
     }
 }
