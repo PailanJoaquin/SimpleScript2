@@ -34,6 +34,7 @@ public class Interpreter {
                 case "orcheck": handleOrcheckStatement(); break;
                 case "otherwise": handleOtherwiseStatement(); break;
                 case "while": handleWhileStatement(); break;
+                case "task": handleFunctionDeclaration(); break;
 
                 default:
                     throw new RuntimeException("Unexpected token: " + current.getLexeme() + " at line" + current.getLineNumber() + "and column" + current.getColumnNumber());
@@ -68,10 +69,18 @@ public class Interpreter {
 
         symbolTable.define(identifier.getLexeme(), null, type); // Save as null
     }
+
+    private boolean functionChecker() {
+        inputStack.pop(); // pop identifier
+        System.out.println(inputStack.peek().getLexeme());
+        System.out.println(inputStack.peek().getLexeme().equals("("));
+        return inputStack.peek().getLexeme().equals("(");
+    }
+
     private void handleAssignmentOrExpression() {
         Token identifier = inputStack.pop(); // variable name
         Token be = inputStack.pop(); // "be"
-        Object value = null;
+        Object value;
         if (be.getType() != TokenType.ASSIGNMENT)
             throw new RuntimeException("Expected 'be' at line" + be.getLineNumber() + " and column" + be.getColumnNumber());
         if (symbolTable.getType(identifier.getLexeme()).matches("String"))
@@ -89,6 +98,7 @@ public class Interpreter {
 
         symbolTable.assign(identifier.getLexeme(), value); // Update value
     }
+
     private void handleShow() {
         inputStack.pop(); // show
         inputStack.pop(); // (
@@ -286,6 +296,40 @@ public class Interpreter {
         }
     }
 
+    private void handleFunctionDeclaration() {
+        inputStack.pop(); // pop 'task'
+
+        String returnType = inputStack.peek().getLexeme();
+        inputStack.pop(); // pop return type
+        System.out.println("Function return type: " + returnType); // DEBUG: Show function return type
+
+
+        String functionName = inputStack.peek().getLexeme();
+        inputStack.pop(); // pop function name
+        System.out.println("Function name: " + functionName);
+
+        inputStack.pop(); // pop '('
+
+        List<Token> functionParams = readTokensUntil(")");
+        Iterator<Token> functionParamsIterator = functionParams.iterator();
+        Stack<Token> functionParamsStack = new Stack<>();
+        while (functionParamsIterator.hasNext()) {
+            functionParamsStack.push(functionParamsIterator.next());
+        }
+        functionParamsStack = reverseStack(functionParamsStack);
+
+        for (Token token : functionParamsStack) {
+            System.out.println(token.getLexeme());
+        }
+
+        inputStack.pop(); // pop '{'
+
+        Stack<Token> functionBodyTokens = readBlockTokens();
+        Interpreter functionBodyInterpreter = new Interpreter();
+        functionBodyInterpreter.symbolTable = this.symbolTable;
+        functionBodyInterpreter.inputStack = reverseStack(functionBodyTokens);
+        functionBodyInterpreter.evaluate();
+    }
 
     private String infixToPostfix(Stack<Token> infix) {
         StringBuilder postfix = new StringBuilder();
