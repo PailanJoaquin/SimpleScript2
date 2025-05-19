@@ -13,6 +13,8 @@ public class Interpreter {
     SymbolTable symbolTable = new SymbolTable();
     SymbolTable loopTable = new SymbolTable();
     Map <Integer, String> paramTable = new HashMap<>();
+    boolean check = false;
+    boolean orcheck = false;
     public Interpreter()
     {
 
@@ -36,7 +38,7 @@ public class Interpreter {
                 case "repeat" : handleForLoop(); break;
                 case "check": handleIfStatement(); break;
                 case "orcheck": handleOrcheckStatement(); break;
-                case "otherwise": handleOtherwiseStatement(); break;
+                case "otherwise": handleOtherwiseStatement(check, orcheck); break;
                 case "while": handleWhile(); break;
                 case "task": handleFunctionDeclaration(); break;
 
@@ -124,14 +126,18 @@ public class Interpreter {
             throw new RuntimeException("Expected 'be' at line" + be.getLineNumber() + " and column" + be.getColumnNumber());
         if (symbolTable.getType(identifier.getLexeme()).matches("String"))
         {
-            System.out.println(symbolTable.getType(identifier.getLexeme()).matches("String"));
-            System.out.println("detected : " + identifier.getLexeme());
-            value = inputStack.pop().getLexeme();
+            value = inputStack.pop().getLexeme().substring(1, inputStack.pop().getLexeme().length() - 1);
         }
 
         else
         {
-            value = evaluateExpression(); // Evaluate expr until semicolon
+            if (symbolTable.contains(identifier.getLexeme()))
+            {
+                value = symbolTable.get(identifier.getLexeme());
+                inputStack.pop();
+            }
+            else
+                value = evaluateExpression(); // Evaluate expr until semicolon
         }
         Token semicolon = inputStack.pop();
         if (semicolon.getType() != TokenType.PUNCTUATION)
@@ -232,7 +238,7 @@ public class Interpreter {
         }
     }
     private void handleIfStatement() {
-
+        check = false;
         // CHECK STATEMENT HANDLER
         inputStack.pop(); // pop 'check'
         inputStack.pop(); // pop '('
@@ -250,6 +256,7 @@ public class Interpreter {
         // Evaluate 'check' condition
         boolean checkCondition = toBoolean(evaluatePostfix(infixToPostfix(reverseStack(checkConditionStack))));
         if (checkCondition) {
+            check = true;
             Interpreter checkInterpreter = new Interpreter();
             checkInterpreter.symbolTable = this.symbolTable;
             checkInterpreter.inputStack = reverseStack(checkBody);
@@ -259,11 +266,11 @@ public class Interpreter {
         if (!checkCondition && inputStack.peek().getLexeme().equals("orcheck")) {
                 handleOrcheckStatement();
         }
-
-
     }
 
     private void handleOrcheckStatement() {
+        orcheck = false;
+
         inputStack.pop(); // pop 'orcheck'
         inputStack.pop(); // pop '('
         List<Token> orcheckConditionTokens = readTokensUntil(")");
@@ -278,26 +285,28 @@ public class Interpreter {
 
         // Evaluate 'orcheck' condition
         boolean orcheckCondition = toBoolean(evaluatePostfix(infixToPostfix(orcheckConditionStack)));
-        if (orcheckCondition) {
+        if (orcheckCondition&&!check) {
+            orcheck = true;
             Interpreter orcheckInterpreter = new Interpreter();
             orcheckInterpreter.symbolTable = this.symbolTable;
             orcheckInterpreter.inputStack = reverseStack(orcheckBody);
             orcheckInterpreter.evaluate();
         }
-
-        if (!orcheckCondition && inputStack.peek().getLexeme().equals("otherwise")) handleOtherwiseStatement();
+        if (!orcheckCondition && inputStack.peek().getLexeme().equals("otherwise")) handleOtherwiseStatement(check, orcheck);
     }
 
-    private void handleOtherwiseStatement() {
+    private void handleOtherwiseStatement(boolean a, boolean b) {
         inputStack.pop(); // pop 'otherwise'
         inputStack.pop(); // pop '{'
 
         Stack<Token> otherwiseBody = readBlockTokens();
-
-        Interpreter otherwiseInterpreter = new Interpreter();
-        otherwiseInterpreter.symbolTable = this.symbolTable;
-        otherwiseInterpreter.inputStack = reverseStack(otherwiseBody);
-        otherwiseInterpreter.evaluate();
+        if(!check && !orcheck)
+        {
+            Interpreter otherwiseInterpreter = new Interpreter();
+            otherwiseInterpreter.symbolTable = this.symbolTable;
+            otherwiseInterpreter.inputStack = reverseStack(otherwiseBody);
+            otherwiseInterpreter.evaluate();
+        }
     }
     private void handleFunctionCall() {
         Token functionName = inputStack.pop();// pop function name

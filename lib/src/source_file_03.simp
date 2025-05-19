@@ -1,6 +1,5 @@
 let int a;
-a be 1;
-while (a less 5) {
-    show(a);
-    a be a plus 1;
-}
+
+a be test;
+
+show(a);

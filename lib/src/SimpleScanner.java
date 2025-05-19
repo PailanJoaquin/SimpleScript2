@@ -175,8 +175,8 @@ public class SimpleScanner {
         if (isLoop(token)) return TokenType.LOOP;
         if (isFunction(token)) return TokenType.FUNCTION;
         if (isDataType(token)) return TokenType.DATA_TYPE;
-        if (isPunctuation(token)) return TokenType.PUNCTUATION;
         if (isLiteral(token)) return TokenType.LITERAL;
+        if (isPunctuation(token)) return TokenType.PUNCTUATION;
         if (isIdentifier(token, TOKENS)) return TokenType.IDENTIFIER;
         return null;
     }

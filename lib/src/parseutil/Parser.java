@@ -43,16 +43,10 @@ public class Parser {
             for (Token input : newInput) {
                 stringInputStack.push(input.getItem());
             }
-
-
-
-
 //            System.out.println("Parsing Stack: " + parseStack);
 //            System.out.println("Input Stack: " + stringInputStack);
 //            System.out.println("Top of the Parsing Stack: " + top);
 //            System.out.println("Top of the Input Stack: " + currentInput);
-
-
             if (isTerminal(top)) {
                 if (currentInput.equals("$") && top.equals("START_PRIME")) {
                     parseStack.pop();
@@ -64,7 +58,13 @@ public class Parser {
                     //System.out.println("Match: " + top);
                     parseStack.pop();
                     newInput.pop();
-                } else {
+                } else if(currentInput.equals("(")&&top.equals("be"))
+                {
+                    while (!newInput.peek().getLexeme().equals(";"))
+                        newInput.pop();
+                    parseStack.pop();// be
+                    parseStack.pop();// LITERAL
+                }else{
                     System.out.println("Syntax Error: Expected " + top + " but found " + currentInput + " at line " + newInput.peek().getLineNumber() + " and " +
                             "column " + newInput.peek().getColumnNumber());
                     return;

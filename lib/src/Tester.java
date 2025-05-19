@@ -18,11 +18,12 @@ public class  Tester {
     public static void main(String[] args) throws IOException {
         // Specify the filename directly
         String filePath = "lib/src/source_file_03.simp";  // Replace this with your desired .simp file path
-
+        System.out.println("Running for file : " + filePath);
         //Parsing Table
 
         //Generate First and Follow Sets
         FirstFollowSetGenerator firstFollowSetGenerator = new FirstFollowSetGenerator("lib/src/parseutil/newgrammar.txt");
+
 
         //Generate Parsing Table
         Map<String, Set<String>> firstSets = firstFollowSetGenerator.getFirstSets();
