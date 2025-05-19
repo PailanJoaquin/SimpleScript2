@@ -1,10 +1,13 @@
 task void sum(int a, int b) {
-    show(a);
-    show(b);
+    let int result;
+    result be a plus b;
+    show(result);
+    show ("taba");
 }
 
+show("hello");
 let int a;
 let int b;
-a be 1;
-b be 2;
+a be 5;
+b be 69;
 sum(a,b);

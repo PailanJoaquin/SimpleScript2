@@ -18,6 +18,7 @@ public class SemanticAnalyzer {
         this.errors = new ArrayList<>();
         this.warnings = new ArrayList<>();
         this.symbolTable = new HashMap<>();
+        this.interpreterTable = new SymbolTable();
     }
 
     public boolean analyze(Stack<Token> inputTokens) {
@@ -68,10 +69,19 @@ public class SemanticAnalyzer {
     }
 
     private void handleFunctionDeclaration() {
+
         while(!tokens.isEmpty() && !tokens.peek().getLexeme().equals("}"))
+        {
             tokens.pop();
+        }
+        tokens.pop();
     }
 
+    public void handleFunctionCall(Stack<Token> functionBody) {
+        Stack<Token> tempStack = new Stack<>();
+        tempStack.addAll(functionBody);
+        analyze(tempStack);
+    }
     private void handleGive() {
         // Skip opening parenthesis
         if (!tokens.isEmpty() && tokens.peek().getLexeme().equals("(")) {
@@ -197,7 +207,6 @@ public class SemanticAnalyzer {
 
 
         // Convert the existing symbolTable to the format used by SymbolTable class
-        SymbolTable table = new SymbolTable();
         for (Map.Entry<String, VariableInfo> entry : symbolTable.entrySet()) {
             String name = entry.getKey();
             VariableInfo info = entry.getValue();
@@ -216,11 +225,9 @@ public class SemanticAnalyzer {
             }
 
             String value = info.value != null ? info.value : "";
-            table.define(name, value, type);
+            interpreterTable.define(name, value, type);
         }
 
-        // Use SymbolTable's printSymbols method
-        interpreterTable = table;
     }
 
 
@@ -551,8 +558,19 @@ public class SemanticAnalyzer {
             this.invalidAttempt = false;
         }
     }
+    public void addToSymbolTable(String varName, String type, String value) {
+        VariableInfo info = new VariableInfo(type, value, true);
+        symbolTable.put(varName, info);
+    }
 
     public SymbolTable getSymbolTable() {
         return interpreterTable;
     }
+    public void setSymbolTable(SymbolTable symbolTable) {
+        this.interpreterTable = symbolTable;
+    }
+    public void printSymbolTable() {;
+        interpreterTable.printSymbols();
+    }
+
 }

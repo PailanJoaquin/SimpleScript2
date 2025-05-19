@@ -12,7 +12,7 @@ public class Interpreter {
     Stack <Token> inputStack;
     SymbolTable symbolTable = new SymbolTable();
     SymbolTable loopTable = new SymbolTable();
-    List<SymbolTable>loopTables = new ArrayList<>();
+    Map <Integer, String> paramTable = new HashMap<>();
     public Interpreter()
     {
 
@@ -311,10 +311,16 @@ public class Interpreter {
             System.err.println("Error: Function '" + functionName.getLexeme() + "' not found. at line " + functionName.getLineNumber() + ", column " + functionName.getColumnNumber());
         }
         int paramCounter = 0;
+        SemanticAnalyzer functionSemanticAnalyzer = new SemanticAnalyzer();
+
         while(!functionParamsStack.isEmpty()) {
             if(functionParamsStack.peek().getType()==TokenType.IDENTIFIER) {
-                String paramValue = functionParamsStack.pop().getLexeme();
-                functionInterpreter.symbolTable.assign(String.valueOf(paramCounter),paramValue);
+                String paramName = paramTable.get(paramCounter);
+                Object paramValue = symbolTable.get(paramName);
+                String type = symbolTable.getType(paramName);
+                functionInterpreter.symbolTable.assign(paramName,paramValue);
+                functionSemanticAnalyzer.addToSymbolTable(paramName, "int", paramValue.toString());
+                functionParamsStack.pop();
                 paramCounter++;
             }
             if(!functionParamsStack.isEmpty())
@@ -324,14 +330,14 @@ public class Interpreter {
                 }
             }
         }
-        SemanticAnalyzer functionSemanticAnalyzer = new SemanticAnalyzer();
         Stack<Token> functionBody = symbolTable.getFunction(functionName.getLexeme());
         functionInterpreter.putInputStack(reverseStack(functionBody));
-        functionSemanticAnalyzer.analyze(functionBody);
+        functionSemanticAnalyzer.setSymbolTable(functionInterpreter.symbolTable);
+        functionSemanticAnalyzer.handleFunctionCall(functionInterpreter.inputStack);
+        functionSemanticAnalyzer.printErrors();
         functionInterpreter.putSymbolTable(functionSemanticAnalyzer.getSymbolTable());
         functionInterpreter.evaluate();
         inputStack.pop(); //pop ';'
-        System.out.println(functionInterpreter.symbolTable);//debug
     }
 
     private void handleFunctionDeclaration() {
@@ -351,13 +357,33 @@ public class Interpreter {
         }
         functionParamsStack = reverseStack(functionParamsStack);
         int paramCounter = 0;
+        String dataType = "";
         while(!functionParamsStack.isEmpty()) {
             if(functionParamsStack.peek().getType()==TokenType.DATA_TYPE) {
-                String dataType = functionParamsStack.pop().getLexeme();
+                switch (functionParamsStack.peek().getLexeme()) {
+                    case "int":
+                        dataType = "Integer";
+                        functionParamsStack.pop();
+                        break;
+                    case "float":
+                        dataType = "Float";
+                        functionParamsStack.pop();
+                        break;
+                    case "string":
+                        dataType = "String";
+                        functionParamsStack.pop();
+                        break;
+                    case "bool":
+                        dataType = "Boolean";
+                        functionParamsStack.pop();
+                        break;
+                }
+
+                String paramName = functionParamsStack.pop().getLexeme(); // pop ID;
                 //System.out.println("Parameter name: " + paramCounter + ", Data Type: " + dataType);
-                functionTable.define(String.valueOf(paramCounter),null, dataType);
+                paramTable.putIfAbsent(paramCounter, paramName);
+                functionTable.define(paramTable.get(paramCounter),null, dataType);
                 paramCounter++;
-                functionParamsStack.pop(); // pop ID;
             }
             if(!functionParamsStack.isEmpty())
             {
@@ -606,10 +632,8 @@ public class Interpreter {
         this.symbolTable = symbolTable;
     }
     public void putInputStack (Stack<Token> inputStack) {
-        this.inputStack = inputStack;
-    }
-    public Object handleFunctionReturn() {
-        inputStack.pop(); // remove return token
-        return symbolTable.get(inputStack.pop().getLexeme());
+        Stack<Token> tempStack = new Stack<>();
+        tempStack.addAll(inputStack);
+        this.inputStack = tempStack;
     }
 }
