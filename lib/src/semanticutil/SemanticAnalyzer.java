@@ -464,6 +464,16 @@ public class SemanticAnalyzer {
                     addWarning("Invalid boolean value '" + value + "'. Defaulting to 'no'", token);
                 }
                 break;
+            case "float":
+                if (isValidFloatValue(value)) {
+                    info.value = value;
+                    info.initialized = true;
+                } else {
+                    info.value = "0.0";
+                    info.initialized = true;
+                    addWarning("Invalid float value '" + value + "'. Defaulting to '0.0'", token);
+                }
+                break;
         }
     }
 

@@ -63,15 +63,12 @@ public class  Tester {
         try {
             boolean semanticSuccess = semanticAnalyzer.analyze(semanticTokens);
 
-            // Generate AST only if semantic analysis passes or if there are only
-            // initialization errors for non-string variables
-            if (semanticSuccess || semanticAnalyzer.hasOnlyInitializationErrors()) {
-                //System.out.println("\nGenerating AST Visualization...");
-                //parser.visualizeAST();
-            }
         }catch (Exception e) {
             System.out.println("Error during semantic analysis: " + e.getMessage());
         }
+        System.out.println("\nGenerating AST Visualization...");
+        parser.visualizeAST();
+
         semanticAnalyzer.printErrors();
         boolean isContinue = false;
         while(!isContinue){
