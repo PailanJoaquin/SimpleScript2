@@ -126,12 +126,12 @@ public class Interpreter {
             throw new RuntimeException("Expected 'be' at line" + be.getLineNumber() + " and column" + be.getColumnNumber());
         if (symbolTable.getType(identifier.getLexeme()).matches("String"))
         {
-            value = inputStack.pop().getLexeme().substring(1, inputStack.pop().getLexeme().length() - 1);
+            value = inputStack.peek().getLexeme().substring(1, inputStack.pop().getLexeme().length() - 1);
         }
 
         else
         {
-            if (symbolTable.contains(identifier.getLexeme()))
+            if (symbolTable.contains(identifier.getLexeme())&&!symbolTable.contains(inputStack.peek().getLexeme()))
             {
                 value = symbolTable.get(identifier.getLexeme());
                 inputStack.pop();

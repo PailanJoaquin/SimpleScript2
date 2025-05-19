@@ -1,5 +1,10 @@
 let int a;
+let int b;
+let int result;
 
-a be test;
+a be 10;
+b be 10;
 
-show(a);
+result be a plus b;
+
+show(result);
