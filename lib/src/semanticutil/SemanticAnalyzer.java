@@ -65,8 +65,19 @@ public class SemanticAnalyzer {
             case "task":
                 handleFunctionDeclaration();
                 break;
+            case "repeat":
+                handleForLoop();
+                break;
         }
     }
+
+    private void handleForLoop() {
+        while (!tokens.isEmpty() && !tokens.peek().getLexeme().equals("}")) {
+            tokens.pop();
+        }
+        tokens.pop();
+    }
+
 
     private void handleFunctionDeclaration() {
 
@@ -166,17 +177,17 @@ public class SemanticAnalyzer {
             if (info == null) {
                 addError("Variable '" + varName + "' not declared", currentToken);
             }
-//            else if (!info.initialized) {
-//                if (info.type.equals("string")) {
-//                    addError("String variable '" + varName + "' must be initialized before use", currentToken);
-//                } else if (info.type.equals("bool")) {
-//                    addWarning("Variable " + varName + " not initialized. Boolean Variable '" + varName + "' defaults to 'no'", currentToken);
-//                } else if (info.type.equals("int")) {
-//                    addWarning("Variable " + varName + " not initialized. Int Variable '" + varName + "' defaults to '0'", currentToken);
-//                } else if (info.type.equals("float")) {
-//                    addWarning("Variable " + varName + " not initialized. Float Variable '" + varName + "' defaults to '0.0'", currentToken);
-//                }
-//            }
+            else if (!info.initialized) {
+                if (info.type.equals("string")) {
+                    addError("String variable '" + varName + "' must be initialized before use", currentToken);
+                } else if (info.type.equals("bool")) {
+                    addWarning("Variable " + varName + " not initialized. Boolean Variable '" + varName + "' defaults to 'no'", currentToken);
+                } else if (info.type.equals("int")) {
+                    addWarning("Variable " + varName + " not initialized. Int Variable '" + varName + "' defaults to '0'", currentToken);
+                } else if (info.type.equals("float")) {
+                    addWarning("Variable " + varName + " not initialized. Float Variable '" + varName + "' defaults to '0.0'", currentToken);
+                }
+            }
         }
 
         while (!tokens.isEmpty() && !tokens.peek().getLexeme().equals(";")) {
@@ -465,6 +476,20 @@ public class SemanticAnalyzer {
                 }
                 break;
             case "float":
+                // Check if it's an arithmetic expression
+                String[] parts = value.split(" ");
+                if (parts.length == 3 && parts[1].equals("plus")) {
+                    // Get the operands
+                    float operand1 = getFloatOperandValue(parts[0]);
+                    float operand2 = getFloatOperandValue(parts[2]);
+                    if (operand1 != Float.MIN_VALUE && operand2 != Float.MIN_VALUE) {
+                        info.value = String.valueOf(operand1 + operand2);
+                        info.initialized = true;
+                        return;
+                    }
+                }
+
+                // Fall back to original behavior for non-arithmetic expressions
                 if (isValidFloatValue(value)) {
                     info.value = value;
                     info.initialized = true;
@@ -475,6 +500,20 @@ public class SemanticAnalyzer {
                 }
                 break;
         }
+    }
+
+    private float getFloatOperandValue(String operand) {
+        // First check if it's a direct float value
+        try {
+            return Float.parseFloat(operand);
+        } catch (NumberFormatException e) {
+            // If not a direct value, check if it's a variable
+            VariableInfo info = symbolTable.get(operand);
+            if (info != null && info.initialized && info.type.equals("float")) {
+                return Float.parseFloat(info.value);
+            }
+        }
+        return Float.MIN_VALUE; // Return sentinel value for invalid operands
     }
 
     private boolean isValidFloatValue(String value) {

@@ -1,4 +1,8 @@
-let float malihinde;
+let int a;
+a be 0;
 
-malihinde be sukingbumble;
-
+while (a less 5)
+{
+    a be a plus 1;
+    show(a);
+}

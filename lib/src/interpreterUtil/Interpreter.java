@@ -11,7 +11,6 @@ import static lib.src.interpreterUtil.interUtil.*;
 public class Interpreter {
     Stack <Token> inputStack;
     SymbolTable symbolTable = new SymbolTable();
-    SymbolTable loopTable = new SymbolTable();
     Map <Integer, String> paramTable = new HashMap<>();
     boolean check = false;
     boolean orcheck = false;
@@ -185,55 +184,61 @@ public class Interpreter {
         //throw new RuntimeException("Invalid expression token: " + token.getLexeme()+" at line" + token.getLineNumber() + "and column" + token.getColumnNumber());
     }
     private void handleForLoop() {
-        loopTable = this.symbolTable;
+        Stack<Token> conditionStack = new Stack<>();
+        Stack<Token> updateStack = new Stack<>();
+        Stack<Token> tempStack = new Stack<>();
+        Stack<Token> tempStack2;
+
         inputStack.pop(); // pop 'repeat'
         inputStack.pop(); // pop '('
-
-        // ---- Initialization: let int i ;
         inputStack.pop(); // pop 'let'
-        String dataType = inputStack.pop().getLexeme(); // int, float, etc.
-        String identifier = inputStack.pop().getLexeme(); // e.g., iclare variable
-        // ---- Initial Assignment: i be <expr> ;
+        Token dataType = inputStack.pop(); // string, int, etc.
+        Token identifier = inputStack.pop(); // variable name
         inputStack.pop(); // pop 'be'
-        Object initValue = evaluateExpression(); // evaluate EXPR
-        loopTable.define(identifier, initValue, dataType);
-        inputStack.pop(); // pop ';'
+        Object initialValue = inputStack.pop().getLexeme(); // initial value
+        inputStack.pop(); //pop ';'
 
-        // ---- Condition: i be <expr> ;
-        String condVar = inputStack.pop().getLexeme(); // i
-        List<Token> conditionExpr = readTokensUntil(";"); // <expr>
+        while(!inputStack.peek().getLexeme().equals(";"))
+        {
+            conditionStack.push(inputStack.pop());
+        }
+        inputStack.pop(); //pop ';'
+        while(!inputStack.peek().getLexeme().equals(")"))
+        {
+            updateStack.push(inputStack.pop());
+        }
+        updateStack = reverseStack(updateStack);
+        inputStack.pop(); //pop ')'
+        inputStack.pop(); //pop '{'
+        tempStack.addAll(conditionStack);
 
-        // ---- Update: i be <expr> )
-        String updateVar = inputStack.pop().getLexeme(); // i
-        inputStack.pop(); // pop 'be'
-        List<Token> updateExpr = readTokensUntil(")"); //example = "i be i plus 1"
-
-        inputStack.pop(); // pop '{'
-        // ---- Extract body tokens until matching '}'
-        Stack<Token> bodyTokens = readBlockTokens();
-        bodyTokens = reverseStack(bodyTokens);
-
-        // ---- Run the loop
-        while (evaluateCondition(condVar, conditionExpr)) {
-            Interpreter bodyInterpreter = new Interpreter(bodyTokens);
-            bodyInterpreter.symbolTable = loopTable; // share symbol table
+        //Get body
+        Stack<Token> forBody = readBlockTokens();
+        Stack<Token> tempStack3 = new Stack<>();
+        tempStack3.addAll(reverseStack(forBody));
 
 
-            // Re-evaluate updateExpr each loop
+        // Evaluate 'check' condition
 
-            Iterator<Token> iterator = updateExpr.iterator();
-            Stack<Token> tempStack = new Stack<>();
-            while (iterator.hasNext()) {
-                tempStack.push(iterator.next());
-            }
-            tempStack.push(new Token(TokenType.PUNCTUATION, ";",0,0));
-            tempStack = reverseStack(tempStack);
-            Iterator<Token> tempIterator = tempStack.iterator();
-            while (tempIterator.hasNext()) {
-                inputStack.push(tempIterator.next());
-            }
-            Object updatedValue = evaluateExpression();
-            loopTable.assign(updateVar, updatedValue);
+        Interpreter forInterpreter = new Interpreter();
+        SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+
+        semanticAnalyzer.setSymbolTable(this.symbolTable);
+        semanticAnalyzer.addToSymbolTable(identifier.getLexeme(), dataType.getLexeme(), initialValue.toString());
+        semanticAnalyzer.printErrors();
+
+        forInterpreter.symbolTable = semanticAnalyzer.getSymbolTable();
+
+        Boolean checkCondition = forInterpreter.checkRepeatCondition(tempStack);
+        while (checkCondition) {
+            tempStack2 = new Stack<>();
+            forInterpreter.putInputStack(tempStack3);
+            forInterpreter.evaluate();
+            tempStack2.addAll(updateStack);
+//            forInterpreter.putInputStack(tempStack2);
+//            forInterpreter.evaluate();
+            forInterpreter.updateRepeatCondition(tempStack2);
+            checkCondition = forInterpreter.checkRepeatCondition(tempStack);
         }
     }
     private void handleIfStatement() {
@@ -492,10 +497,6 @@ public class Interpreter {
         }
         return body;
     }
-    private boolean evaluateCondition(String varName, List<Token> expr) {
-        loopTable.assign(varName, "int"); // just in case
-        return false;
-    }
     public boolean toBoolean(String value) {
         if (value.equals("yes")) return true;
         else if (value.equals("no"))
@@ -649,5 +650,18 @@ public class Interpreter {
         Stack<Token> tempStack = new Stack<>();
         tempStack.addAll(inputStack);
         this.inputStack = tempStack;
+    }
+    public boolean checkRepeatCondition(Stack<Token> condition)
+    {
+        return toBoolean(evaluatePostfix(infixToPostfix(condition)));
+    }
+    public void updateRepeatCondition(Stack<Token> condition) {
+        Stack<Token> tempStack = new Stack<>();
+        tempStack.addAll(condition);
+        String variable = tempStack.pop().getLexeme();
+        tempStack.pop();
+
+        String result = evaluatePostfix(infixToPostfix(tempStack));
+        symbolTable.assign(variable, result);
     }
 }
