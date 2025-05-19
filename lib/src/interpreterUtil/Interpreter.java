@@ -58,17 +58,23 @@ public class Interpreter {
         }
         checkConditionStack = reverseStack(checkConditionStack);
         inputStack.pop(); // pop '{'
+        Stack<Token> tempStack = new Stack<>();
+        tempStack.addAll(checkConditionStack);
         Stack<Token> whileBody = readBlockTokens();
 
         // Evaluate 'check' condition
-        boolean checkCondition = toBoolean(evaluatePostfix(infixToPostfix(reverseStack(checkConditionStack))));
+        Stack <Token> conditionStack = new Stack<>();
+        conditionStack.addAll(reverseStack(checkConditionStack));
+        boolean checkCondition = toBoolean(evaluatePostfix(infixToPostfix(conditionStack)));
         Interpreter checkInterpreter = new Interpreter();
         checkInterpreter.symbolTable = this.symbolTable;
-        checkInterpreter.inputStack = reverseStack(whileBody);
+        whileBody = reverseStack(whileBody);
         while (checkCondition) {
-            System.out.println("hi" + checkCondition);
+            Stack<Token> tempStack2 = new Stack<>();
+            tempStack2.addAll(whileBody);
+            checkInterpreter.inputStack = tempStack2;
             checkInterpreter.evaluate();
-            checkCondition = toBoolean(evaluatePostfix(infixToPostfix(reverseStack(checkConditionStack))));
+            checkCondition = toBoolean(evaluatePostfix(infixToPostfix(conditionStack)));
         }
 
     }

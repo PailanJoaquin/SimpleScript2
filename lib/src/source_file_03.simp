@@ -1,13 +1,6 @@
-task void sum(int a, int b) {
-    let int result;
-    result be a plus b;
-    show(result);
-    show ("taba");
-}
-
-show("hello");
 let int a;
-let int b;
-a be 5;
-b be 69;
-sum(a,b);
+a be 1;
+while (a less 5) {
+    show(a);
+    a be a plus 1;
+}
